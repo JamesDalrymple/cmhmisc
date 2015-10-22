@@ -88,10 +88,10 @@ char_cols <-
 read_header <- function(file_path) {
   s <- 0
   DT_header <-
-    read.table(file=d00_list[i], header=FALSE, sep=",", skip=s, nrows=1)
+    read.table(file=file_path, header=FALSE, sep=",", skip=s, nrows=1)
   repeat {
     s <- s + 1
-    add_line <- read.table(file=d00_list[i], header=FALSE,
+    add_line <- read.table(file=file_path, header=FALSE,
                            sep=",", skip=s, nrows=1)
     if (sum(is.na(add_line))==length(add_line)) break
     DT_header <- rbind(DT_header, add_line)
@@ -108,7 +108,7 @@ read.fb <- function(file_path) {
   fn <- EquaPac:::fn # for now, may revisit this fn() later in EquaPac
   V1 <- V2 <- NULL # checker appeasment
   attr_DT <- read_header(file_path)
-  DT <- fread(input = file_path, skip = only_space, showProgress = FALSE)
+  DT <- fread(input = file_path, showProgress = FALSE)
   # check classes and column names
   if(!identical(lapply(DT, class), char_cols)) {
     p_stop("The file does not have FB structure, please examine classes of
