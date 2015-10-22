@@ -11,7 +11,7 @@
  $ PROVIDER ID         : chr "integer"
  $ CASE #              : chr "integer"
  $ PRI PROCEDURE CODE  : chr "character"
- $ SEC PROCECURE CODE  : chr "logical"
+ $ SEC PROCECURE CODE  : chr [1:2] "logical" "character"
  $ MOD                 : chr "character"
  $ SERVICE DESC        : chr "character"
  $ CATEGORY DESC       : chr "character"

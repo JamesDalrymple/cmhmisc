@@ -23,7 +23,7 @@ NULL
 #'
 #' @note Might even format if James isn't to lazy to do it himself.
 #'
-#' @importFrom EquaPac p_stop fn
+#' @importFrom EquaPac p_stop fn %nin%
 #' @importFrom data.table data.table last := .SD fread
 
 #' @usage NULL
@@ -34,7 +34,7 @@ char_cols <-
     `PROVIDER ID` = "integer",
     `CASE #` = "integer",
     `PRI PROCEDURE CODE` = "character",
-    `SEC PROCECURE CODE` = "logical",
+    `SEC PROCECURE CODE` = c("logical", "character"),
     MOD = "character",
     `SERVICE DESC` = "character",
     `CATEGORY DESC` = "character",
@@ -106,11 +106,14 @@ read_header <- function(file_path) {
 #' @export
 read.fb <- function(file_path) {
   fn <- EquaPac:::fn # for now, may revisit this fn() later in EquaPac
-  V1 <- V2 <- NULL # checker appeasment
+  V1 <- V2 <- col_values <- incoming_dt <- NULL # checker appeasment
   attr_DT <- read_header(file_path)
   DT <- fread(input = file_path, showProgress = FALSE)
   # check classes and column names
-  if(!identical(lapply(DT, class), char_cols)) {
+  check_col_dt <- data.table(col_names = names(char_cols),
+             col_values = char_cols)
+  check_col_dt[, incoming_dt := lapply(DT, class)]
+  if (nrow(check_col_dt[incoming_dt %nin% col_values]) > 0) {
     p_stop("The file does not have FB structure, please examine classes of
             fread(file), file = ", file_path)
   }
