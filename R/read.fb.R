@@ -1,11 +1,12 @@
 #' @title FB file reader
-#' @name read.fb
-NULL
 #' @description Read in funding bucket files via data.table::fread and convert
-#' them to the "fb" class. The header is stored as attributes.
-#' Applies attrubutes based off of the file header information.
+#' them to the "fb" class. The header is stored as attributes. Applies
+#' attrubutes based off of the file header information.
 #'
 #' @param file_path Path to fb .csv file.
+#' @return A data.table object that is also class 'fb.'
+#'
+#' @note Could format the columns coming in as factors if that were desirable.
 #'
 #' @examples
 #' \dontrun{
@@ -19,14 +20,14 @@ NULL
 #' attributes(my_fb_dt)
 #' }
 #'
-#' @return A data.table object that is also class 'fb.'
-#'
-#' @note Might even format if James isn't to lazy to do it himself.
+
 #'
 #' @importFrom EquaPac p_stop fn %nin%
 #' @importFrom data.table data.table last := .SD fread
 
-#' @usage NULL
+#' @name read.fb
+NULL
+
 #' @rdname read.fb
 char_cols <-
   list(
@@ -83,17 +84,17 @@ char_cols <-
     `CLAIM DETAIL ID` = "integer",
     SOURCE = "character")
 
-#' @usage NULL
 #' @rdname read.fb
 read_header <- function(file_path) {
   s <- 0
   DT_header <-
-    read.table(file=file_path, header=FALSE, sep=",", skip=s, nrows=1)
+    read.table(file = file_path, header = FALSE,
+               sep = ",", skip = s, nrows = 1)
   repeat {
     s <- s + 1
-    add_line <- read.table(file=file_path, header=FALSE,
-                           sep=",", skip=s, nrows=1)
-    if (sum(is.na(add_line))==length(add_line)) break
+    add_line <- read.table(file = file_path, header = FALSE,
+                           sep = ",", skip = s, nrows = 1)
+    if (sum(is.na(add_line)) == length(add_line)) break
     DT_header <- rbind(DT_header, add_line)
   }
   if (s >= 8) p_stop("More than 7 rows in the header, something has changed in
@@ -105,7 +106,7 @@ read_header <- function(file_path) {
 #' @rdname read.fb
 #' @export
 read.fb <- function(file_path) {
-  fn <- EquaPac:::fn # for now, may revisit this fn() later in EquaPac
+  # fn <- EquaPac:::fn # for now, may revisit this fn() later in EquaPac
   V1 <- V2 <- col_values <- incoming_dt <- NULL # checker appeasment
   attr_DT <- read_header(file_path)
   DT <- fread(input = file_path, showProgress = FALSE)

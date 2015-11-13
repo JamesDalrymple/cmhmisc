@@ -2,12 +2,14 @@ Package: wccmh
 Type: Package
 Title: Washtenaw County CMH repo
 Version: 0.1.0
-Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role = c("aut", "cre"))
+Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role =
+    c("aut", "cre"))
 Maintainer: J Dalrymple <dalrymplej@ewashtenaw.org>
 Description: Convenience functions to speed code writing at WCCMH.
 Depends:
     R (>= 3.2.2),
     data.table (>= 1.9.6),
-	EquaPac
+    EquaPac
 License: MIT + file LICENSE
 ByteCompile: TRUE
+RoxygenNote: 5.0.1
