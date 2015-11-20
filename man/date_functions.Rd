@@ -5,7 +5,7 @@
 \alias{date_functions}
 \title{WCCMH date functions}
 \usage{
-date_convert(x, format = "\%m/\%d/\%Y", origin = "1970-01-01")
+date_convert(x, format = NULL, origin = "1970-01-01")
 }
 \arguments{
 \item{x}{A character vector of dates.}

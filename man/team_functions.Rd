@@ -12,6 +12,10 @@
 \title{WCCMH team functions}
 \format{An object of class \code{list} of length 10.}
 \usage{
+cmh_team_key
+
+cmh_program_key
+
 cmh_recode(x)
 
 recode_team_prog(x)
@@ -35,10 +39,15 @@ A vector of recoded team names.
 }
 \description{
 cmh_recode recodes Washtenaw CMH team names to a standardized
-format.
+team format.
+recode_team_prog recodes Washtenaw CMH team/program names to a standardized
+program format.
+cmh_teams_f factors (ordered is an option) teams.
+cmh_priority_dt assigns a priority to all of the main teams.
 }
 \note{
-more coming soon...
+need testing, consider adding an automatic "missing" assignment
+with a warning message.
 }
 \examples{
 \dontrun{

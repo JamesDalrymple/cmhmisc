@@ -1,6 +1,11 @@
 #' @title WCCMH team functions
-#' @description cmh_recode recodes Washtenaw CMH team names to a standardized
-#' format.
+#' @description
+#' cmh_recode recodes Washtenaw CMH team names to a standardized
+#' team format.
+#' recode_team_prog recodes Washtenaw CMH team/program names to a standardized
+#' program format.
+#' cmh_teams_f factors (ordered is an option) teams.
+#' cmh_priority_dt assigns a priority to all of the main teams.
 #'
 #' @param x A character vector of team names. Will be coerced to character if
 #' class(x) is factor.
@@ -10,7 +15,8 @@
 #'
 #' @return A vector of recoded team names.
 #'
-#' @note more coming soon...
+#' @note need testing, consider adding an automatic "missing" assignment
+#' with a warning message.
 #'
 #' @examples
 #' \dontrun{
@@ -23,7 +29,6 @@
 #' @name team_functions
 NULL
 
-#' @usage NULL
 #' @rdname team_functions
 cmh_team_key <- list(
   ACT = c("ACT", "WSH - ACT"),
@@ -42,7 +47,6 @@ cmh_team_key <- list(
              "WSH - Sobriety Court", "Crisis Residential Services")
 )
 
-#' @usage NULL
 #' @rdname team_functions
 cmh_program_key <- list(
   DD = c("DD", "WSH - DD Adult", "DD Adult"),
@@ -63,20 +67,13 @@ cmh_program_key <- list(
 #' @export
 cmh_recode <- function(x) {
   if (class(x) == "factor") x <- as.chr(x)
-  recode_string(x = x,
-                recode_key = cmh_team_key
-                )
+  recode_string(x = x, recode_key = cmh_team_key)
 }
 
 #' @rdname team_functions
 #' @export
 recode_team_prog <- function(x) {
-  vapply(
-    X = x, FUN = recode_string,
-    recode_key = cmh_program_key,
-    FUN.VALUE = as.character("one"),
-    USE.NAMES = FALSE
-  )
+  recode_string(x, recode_key = cmh_program_key)
 }
 
 #' @rdname team_functions
@@ -102,4 +99,3 @@ cmh_priority_dt <-
   data.table(team = c("OBRA", "ACT", "DD", "MI", "Child HB", "Child",
                       "PATH/PORT", "Access", "non-CMH"),
              priority = 1:9)
-# cmh_priority_dt[, priority := .I]
