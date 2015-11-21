@@ -39,8 +39,6 @@ my_fb_dt <- read.fb(file_path)
 lapply(my_fb_dt, class)
 attributes(my_fb_dt)
 }
-
-
 }
 \keyword{datasets}
 

@@ -13,5 +13,6 @@ Depends:
 Imports:
     english
 License: MIT + file LICENSE
+LazyData: true
 ByteCompile: TRUE
 RoxygenNote: 5.0.1
