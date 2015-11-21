@@ -30,7 +30,6 @@ date_convert <-
         NULL
       },
       "character" = {
-        x = "10/1/2015"
         split_x <- unlist(strsplit(x, split = "/|-"))
         if (3L != length(split_x)) {
           p_stop("A date must have 3 parts, with separators '-' or '/'.

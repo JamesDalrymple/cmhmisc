@@ -19,9 +19,6 @@
 #' lapply(my_fb_dt, class)
 #' attributes(my_fb_dt)
 #' }
-#'
-
-#'
 #' @importFrom EquaPac p_stop fn %nin%
 #' @importFrom data.table data.table last := .SD fread
 
