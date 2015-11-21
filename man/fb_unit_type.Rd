@@ -18,6 +18,9 @@ issue. Subject to update when necessary. Last updated 11/3/2015.
 \examples{
 \dontrun{
 data(fb_unit_type)
+rm("fb_unit_type")
+fb_unit_type
+wccmh::fb_unit_type
 }
 }
 \keyword{datasets}

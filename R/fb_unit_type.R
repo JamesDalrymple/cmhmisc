@@ -25,4 +25,4 @@
 # fb_unit_type <-
 #   readRDS("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/fb_unit_type.rdata")
 # fb_unit_type[mod=="", mod := NA]
-# saveRDS(fb_unit_type, "fb_unit_type.RData")
+# save(fb_unit_type, file = "fb_unit_type.rda")
