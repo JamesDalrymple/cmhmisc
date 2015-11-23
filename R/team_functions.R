@@ -67,13 +67,22 @@ cmh_program_key <- list(
 #' @export
 cmh_recode <- function(x) {
   if (class(x) == "factor") x <- as.chr(x)
-  recode_string(x = x, recode_key = cmh_team_key)
+  if (any(is.na(x))) x[is.na(x)] <- "missing"
+  recode_key <- cmh_team_key
+  unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
+  recode_key$unknown <- unknown
+  recode_string(x = x, recode_key = recode_key)
 }
 
 #' @rdname team_functions
 #' @export
 recode_team_prog <- function(x) {
-  recode_string(x, recode_key = cmh_program_key)
+  if (class(x) == "factor") x <- as.chr(x)
+  if (any(is.na(x))) x[is.na(x)] <- "missing"
+  recode_key <- cmh_program_key
+  unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
+  recode_key$unknown <- unknown
+  recode_string(x, recode_key = recode_key)
 }
 
 #' @rdname team_functions
