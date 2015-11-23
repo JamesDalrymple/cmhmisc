@@ -16,9 +16,9 @@ cmh_team_key
 
 cmh_program_key
 
-cmh_recode(x)
+cmh_recode(x, missing_key = "non-CMH")
 
-recode_team_prog(x)
+recode_team_prog(x, missing_key = "non-CMH")
 
 cmh_teams_f(x, levels = c("ACT", "DD", "MI", "Child HB", "Child"),
   level_order = NULL)
@@ -29,13 +29,19 @@ cmh_priority_dt
 \item{x}{A character vector of team names. Will be coerced to character if
 class(x) is factor.}
 
+\item{missing_key}{What will happen if a recode_ function is supplied a value not
+found in recode key. Default is 'non-CMH'. If missing_key is assigned to NULL,
+an error will occur if any values are in x and not in recode_key.}
+
 \item{levels}{The levels that will be assigned. Unspecified inputs result
 in NA.}
 
 \item{level_order}{The order of the levels. Defaults to NULL.}
 }
 \value{
-A vector of recoded team names.
+recode_x functions: A vector of recoded team/program names.
+cmh_teams_f A factored vector.
+cmh_priority_dt A data.table object.
 }
 \description{
 cmh_recode recodes Washtenaw CMH team names to a standardized

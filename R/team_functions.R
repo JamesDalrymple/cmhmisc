@@ -9,11 +9,16 @@
 #'
 #' @param x A character vector of team names. Will be coerced to character if
 #' class(x) is factor.
+#' @param missing_key What will happen if a recode_ function is supplied a value not
+#' found in recode key. Default is 'non-CMH'. If missing_key is assigned to NULL,
+#' an error will occur if any values are in x and not in recode_key.
 #' @param levels The levels that will be assigned. Unspecified inputs result
 #' in NA.
 #' @param level_order The order of the levels. Defaults to NULL.
 #'
-#' @return A vector of recoded team names.
+#' @return recode_x functions: A vector of recoded team/program names.
+#' cmh_teams_f A factored vector.
+#' cmh_priority_dt A data.table object.
 #'
 #' @note need testing, consider adding an automatic "missing" assignment
 #' with a warning message.
@@ -65,9 +70,9 @@ cmh_program_key <- list(
 
 #' @rdname team_functions
 #' @export
-cmh_recode <- function(x) {
+cmh_recode <- function(x, missing_key = "non-CMH") {
   if (class(x) == "factor") x <- as.chr(x)
-  if (any(is.na(x))) x[is.na(x)] <- "missing"
+  if (any(is.na(x))) x[is.na(x)] <- missing_key
   recode_key <- cmh_team_key
   unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
   recode_key$unknown <- unknown
@@ -76,9 +81,9 @@ cmh_recode <- function(x) {
 
 #' @rdname team_functions
 #' @export
-recode_team_prog <- function(x) {
+recode_team_prog <- function(x, missing_key = "non-CMH") {
   if (class(x) == "factor") x <- as.chr(x)
-  if (any(is.na(x))) x[is.na(x)] <- "missing"
+  if (any(is.na(x))) x[is.na(x)] <- missing_key
   recode_key <- cmh_program_key
   unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
   recode_key$unknown <- unknown
