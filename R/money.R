@@ -12,7 +12,7 @@ NULL
 #' class integer and be greater than or equal to 0.
 #'
 #' @examples
-#' money_string <- c("$1.04", "$2.24")
+#' money_string <- c("$1.04", "$2.24", "$2,000", "$235,658")
 #' (no_money_string <- money_rm(money_string))
 #' money_add(no_money_string)
 #' @return A numeric vector.
@@ -25,7 +25,7 @@ NULL
 #'
 #' @export
 #' @rdname money
-# remove '$' symbol and ',' from dollar strings, and convert to numeric ----
+# remove '$' symbol and ',' from dollar strings, and convert to numeric
 money_rm <- function(x) {
   result = gsub(x = x,
                 pattern = "[$,)]",
@@ -61,35 +61,25 @@ money_add_one <- function(x, sig_fig = sig_fig) {
   dt_call <- data.table(
     type = c("none", "K", "M", "B", "T", "scientic"),
     f = c(
-      quote(stringi::stri_c("$", signif(x, digits = sig_fig))),
-      quote(stringi::stri_c("$", signif(x / 1e3, digits = sig_fig), "K")),
-      quote(stringi::stri_c("$", signif(x / 1e6, digits = sig_fig), "M")),
-      quote(stringi::stri_c("$", signif(x / 1e9, digits = sig_fig), "B")),
-      quote(stringi::stri_c("$", signif(x / 1e12, digits = sig_fig), "T")),
-      quote(format(x, scientific = TRUE, digits = sig_fig))))
-  setkey(dt_call, type)
-  eval(dt_call[as.character(x_type), f][[1]])
-
+      bquote(stringi::stri_c("$", signif(x, digits = .(sig_fig) ))),
+      bquote(stringi::stri_c("$", signif(x / 1e3, digits = .(sig_fig)), "K")),
+      bquote(stringi::stri_c("$", signif(x / 1e6, digits = .(sig_fig)), "M")),
+      bquote(stringi::stri_c("$", signif(x / 1e9, digits = .(sig_fig)), "B")),
+      bquote(stringi::stri_c("$", signif(x / 1e12, digits = .(sig_fig)), "T")),
+      bquote(format(x, scientific = TRUE, digits = sig_fig))))
+  eval(dt_call[type==as.character(x_type), f][[1]])
+  # setkey(dt_call, type)
+  # x <- (1.04,   1000.00, 123456.00)
+  # dt_call[as.character(x_type), f][[1]](x[1])
+  # dt_call[as.character(x_type), f][[2]](x[2])
+  # dt_call2 <- dt_call[J(x_type)]
+  # dt_call2[, x := x]
+  # lapply(Map(list, dt_call2$f, x), FUN = function(x) as.call(x))
+  # lapply(Map(list, dt_call2$f, x), FUN = function(x) eval(as.call(x)))
+  # lapply(Map(list, dt_call2$f, x), FUN = function(x) as.call(x))[[1]]
+  # lapply(Map(list, dt_call2$f, x), FUN = function(x) eval(as.call(x)))
+  # Reduce(f = function(x) c, dt_call[as.character(x_type), f], 2)
 }
-
-# money_add_one <- function(x, signif) {
-#   # if missing values exist, replace result with missing values
-#   if (is.na(x)) {
-#     money_lab = NA_character_} else
-#     # millions
-#     if (x > 1e6) {
-#       money_lab = paste("$", round(x / 1e6, 2), "M", sep = "")} else
-#       # thousands
-#       if (x < 1e6) {
-#         money_lab = paste("$", round(x / 1e3, 0), "K", sep = "")} else
-#         # less than 1000
-#         if (x < 1e3) {
-#           money_lab =  paste("$", x, sep = "")
-#         }
-#   return(money_lab)
-# }
-
-
 #' @export
 #' @rdname money
 money_add <- function(x, sig_fig = 3) sapply(x, money_add_one, sig_fig)
