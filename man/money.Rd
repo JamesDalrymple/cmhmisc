@@ -9,10 +9,13 @@
 \usage{
 money_rm(x)
 
-money_add(x)
+money_add(x, sig_fig = 3)
 }
 \arguments{
 \item{x}{an input vector: character for money_rm, numeric for money_add}
+
+\item{sig_fig}{Number of significant figures; must be coerceable to
+class integer and be greater than or equal to 0.}
 }
 \value{
 A numeric vector.
