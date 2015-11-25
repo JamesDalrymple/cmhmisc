@@ -3,7 +3,6 @@
 \name{money}
 \alias{money}
 \alias{money_add}
-\alias{money_add_one}
 \alias{money_rm}
 \title{Money Functions}
 \usage{
@@ -29,8 +28,9 @@ converts to numeric. Changes numbers inside of paretheses to negative.
 Other functions for money will go in this file.
 }
 \examples{
-money_string <- c("$1.04", "$2.24")
+money_string <- c("$1.04", "$2.24", "$2,000", "$235,658")
 (no_money_string <- money_rm(money_string))
 money_add(no_money_string)
+money_add(x = c(1.04, 2.56e6, 3.545e9, -1.678e14))
 }
 

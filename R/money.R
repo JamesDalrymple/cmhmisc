@@ -15,13 +15,13 @@ NULL
 #' money_string <- c("$1.04", "$2.24", "$2,000", "$235,658")
 #' (no_money_string <- money_rm(money_string))
 #' money_add(no_money_string)
+#' money_add(x = c(1.04, 2.56e6, 3.545e9, -1.678e14))
 #' @return A numeric vector.
 #'
 #' @note Other functions for money will go in this file.
 #'
-#' @importFrom data.table data.table setkey
+#' @importFrom data.table data.table :=
 #' @importFrom EquaPac as.num as.int
-#' @importFrom stringi stri_c
 #'
 #' @export
 #' @rdname money
@@ -37,11 +37,10 @@ money_rm <- function(x) {
   return(result)
 }
 
-
-f <- type <- NULL # RMD checker appeasement
-#' @usage NULL
+input_x <- eval_x <- sign_x <- NULL # RMD checker appeasement
 #' @rdname money
-money_add_one <- function(x, sig_fig = sig_fig) {
+#' @export
+money_add <- function(x, sig_fig = 3) {
   sig_fig <- as.int(sig_fig)
   if (class(sig_fig) != "integer") {
     p_stop("sig_fig is not of class integer, but is class", class(sig_fig))
@@ -54,32 +53,19 @@ money_add_one <- function(x, sig_fig = sig_fig) {
            x <- as.num(x)
            money_add(x)},
          p_stop("money_add does not allow class", class(x), "!"))
-  x_type <- cut(x,
-              breaks = c(0, 1e3, 1e6, 1e9, 1e12, 1e15, Inf),
-              labels = c("none", "K", "M", "B", "T", "scientific"),
-              include.lowest = TRUE, right = FALSE)
-  dt_call <- data.table(
-    type = c("none", "K", "M", "B", "T", "scientic"),
-    f = c(
-      bquote(stringi::stri_c("$", signif(x, digits = .(sig_fig) ))),
-      bquote(stringi::stri_c("$", signif(x / 1e3, digits = .(sig_fig)), "K")),
-      bquote(stringi::stri_c("$", signif(x / 1e6, digits = .(sig_fig)), "M")),
-      bquote(stringi::stri_c("$", signif(x / 1e9, digits = .(sig_fig)), "B")),
-      bquote(stringi::stri_c("$", signif(x / 1e12, digits = .(sig_fig)), "T")),
-      bquote(format(x, scientific = TRUE, digits = sig_fig))))
-  eval(dt_call[type==as.character(x_type), f][[1]])
-  # setkey(dt_call, type)
-  # x <- (1.04,   1000.00, 123456.00)
-  # dt_call[as.character(x_type), f][[1]](x[1])
-  # dt_call[as.character(x_type), f][[2]](x[2])
-  # dt_call2 <- dt_call[J(x_type)]
-  # dt_call2[, x := x]
-  # lapply(Map(list, dt_call2$f, x), FUN = function(x) as.call(x))
-  # lapply(Map(list, dt_call2$f, x), FUN = function(x) eval(as.call(x)))
-  # lapply(Map(list, dt_call2$f, x), FUN = function(x) as.call(x))[[1]]
-  # lapply(Map(list, dt_call2$f, x), FUN = function(x) eval(as.call(x)))
-  # Reduce(f = function(x) c, dt_call[as.character(x_type), f], 2)
+  dt_call <- data.table(input_x = abs(x), eval_x = NA_character_, sign_x = sign(x))
+  dt_call[input_x >= 0 & input_x < 1e3,
+    eval_x := paste0("$", signif(input_x, digits = sig_fig ))]
+  dt_call[input_x >= 1e3 & input_x < 1e6,
+          eval_x := paste0("$", signif(input_x/1e3, digits = sig_fig ), "K")]
+  dt_call[input_x >= 1e6 & input_x < 1e9,
+          eval_x := paste0("$", signif(input_x/1e6, digits = sig_fig ), "M")]
+  dt_call[input_x >= 1e9 & input_x < 1e12,
+          eval_x := paste0("$", signif(input_x/1e9, digits = sig_fig ), "B")]
+  dt_call[input_x >= 1e12 & input_x < 1e15,
+          eval_x := paste0("$", signif(input_x/1e12, digits = sig_fig ), "T")]
+  dt_call[sign_x == -1,
+          eval_x := gsub(x = eval_x, pattern = "$",
+                         replacement = "-$", fixed = TRUE)]
+  return(dt_call[, eval_x])
 }
-#' @export
-#' @rdname money
-money_add <- function(x, sig_fig = 3) sapply(x, money_add_one, sig_fig)
