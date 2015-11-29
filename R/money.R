@@ -1,6 +1,5 @@
 #' @title Money Functions
-#' @name money
-NULL
+
 #' @description Functions for dealing with dollar formats imported from
 #' outside of R. Removes '$' symbol and ',' from dollar strings and
 #' converts to numeric. Changes numbers inside of paretheses to negative.
@@ -22,7 +21,8 @@ NULL
 #'
 #' @importFrom data.table data.table :=
 #' @importFrom EquaPac as.num as.int
-#'
+#' @name money
+NULL
 #' @export
 #' @rdname money
 # remove '$' symbol and ',' from dollar strings, and convert to numeric

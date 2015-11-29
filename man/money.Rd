@@ -8,6 +8,8 @@
 \usage{
 money_rm(x)
 
+money_rm(x)
+
 money_add(x, sig_fig = 3)
 }
 \arguments{
