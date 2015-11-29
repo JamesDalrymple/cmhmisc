@@ -19,7 +19,7 @@
 #' @note Consider making a new fiscal_year class and/or fiscal_quarter class.
 #' Also consider making some methods (this needs further consideration).
 #'
-# #' @importFrom zoo as.yearqtr as.yearmon
+#' @importFrom zoo as.yearqtr as.yearmon
 #' @name fiscal
 NULL
 
