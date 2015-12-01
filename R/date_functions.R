@@ -77,7 +77,7 @@ date_convert <-
   function(x, format = NULL, origin = "1970-01-01") {
     fn_count <- new_counter()
     i <- fn_count()
-    input_dt <- data.table(date_x = x, class_x = class(x))
+    input_dt <- data.table(date_x = x, class_x = class(x)[1])
     switch(
       class(x[1]),
       "Date" = {
