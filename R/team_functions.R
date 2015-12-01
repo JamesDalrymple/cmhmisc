@@ -48,7 +48,7 @@ cmh_team_key <- list(
              "Washtenaw County Community Mental Health"),
   OBRA = c("WSH - OBRA", "OBRA"),
   UM = c("WSH - Utilization Management", "UM"),
-  `non-CMH` = c("non-CMH", "Non-CMH", "WSH - MH Court",
+  `non-CMH` = c("non-CMH", "Non-CMH", "WSH - MH Court", "WSH - ICSS team",
              "WSH - Sobriety Court", "Crisis Residential Services")
 )
 
