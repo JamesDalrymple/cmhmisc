@@ -79,7 +79,7 @@ date_convert <-
     i <- fn_count()
     input_dt <- data.table(date_x = x, class_x = class(x))
     switch(
-      class(x),
+      class(x[1]),
       "Date" = {
         NULL
       },
@@ -104,7 +104,29 @@ date_convert <-
           )
         }
         i <- fn_count()
+        },
+      "POSIXct" = {
+        x <- as.chr(x)
+        y <- date_convert(x)
+        if (i > 2) {
+          p_stop(
+            "x already passed twice through 'factor',
+            report bug to wccmh author with example data!"
+          )
         }
+        i <- fn_count()
+        },
+      "POSIXt" = {
+        x <- as.chr(x)
+        y <- date_convert(x)
+        if (i > 2) {
+          p_stop(
+            "x already passed twice through 'factor',
+            report bug to wccmh author with example data!"
+          )
+        }
+        i <- fn_count()
+      }
     )
     return(input_dt[, as.Date(result_x, origin)])
       }
