@@ -7,7 +7,8 @@
 #' @return A vector of dates of class 'Date'.
 #'
 #' @note .date_convert could be moved to C++. lapply() loses the class 'Date',
-#' perhapse a better method exists.
+#' perhapse a better method exists. Also, today:  use S3 methods instead of a
+#' switch statement.
 #'
 #' @examples
 #' \dontrun{
@@ -17,8 +18,11 @@
 #' x <- c("10/1/2014", "10/2/2015", "10/1/2014", NA)
 #' x <- as.Date("10/1/2014", format = "%m/%d/%Y")
 #' date_convert(x)
+#' x <- as.POSIXct(c("2014-10-1", "2015-10-2", NA))
+#' date_convert(x)
+#'
 #' }
-#' @importFrom EquaPac new_counter as.chr
+#' @importFrom EquaPac as.chr
 #' @importFrom data.table data.table :=
 #'
 #' @name date_functions
@@ -75,11 +79,9 @@ date_x <- result_x <- NULL # RMD checker appeasement
 #' @export
 date_convert <-
   function(x, format = NULL, origin = "1970-01-01") {
-    fn_count <- new_counter()
-    i <- fn_count()
     input_dt <- data.table(date_x = x, class_x = class(x)[1])
     switch(
-      class(x[1]),
+      class(x)[1],
       "Date" = {
         NULL
       },
@@ -95,37 +97,40 @@ date_convert <-
                    )]
       },
       "factor" = {
-        x <- as.chr(x)
-        y <- date_convert(x)
-        if (i > 2) {
-          p_stop(
-            "x already passed twice through 'factor',
-            report bug to wccmh author with example data!"
-          )
-        }
-        i <- fn_count()
+        input_dt[, date_x := as.chr(date_x)]
+        input_dt[, result_x :=
+                   vapply(
+                     date_x,
+                     FUN = .date_convert,
+                     FUN.VALUE = as.Date(NA),
+                     format,
+                     origin,
+                     USE.NAMES = FALSE
+                   )]
         },
       "POSIXct" = {
-        x <- as.chr(x)
-        y <- date_convert(x)
-        if (i > 2) {
-          p_stop(
-            "x already passed twice through 'factor',
-            report bug to wccmh author with example data!"
-          )
-        }
-        i <- fn_count()
+        input_dt[, date_x := as.chr(date_x)]
+        input_dt[, result_x :=
+                   vapply(
+                     date_x,
+                     FUN = .date_convert,
+                     FUN.VALUE = as.Date(NA),
+                     format,
+                     origin,
+                     USE.NAMES = FALSE
+                   )]
         },
       "POSIXt" = {
-        x <- as.chr(x)
-        y <- date_convert(x)
-        if (i > 2) {
-          p_stop(
-            "x already passed twice through 'factor',
-            report bug to wccmh author with example data!"
-          )
-        }
-        i <- fn_count()
+        input_dt[, date_x := as.chr(date_x)]
+        input_dt[, result_x :=
+                   vapply(
+                     date_x,
+                     FUN = .date_convert,
+                     FUN.VALUE = as.Date(NA),
+                     format,
+                     origin,
+                     USE.NAMES = FALSE
+                   )]
       }
     )
     return(input_dt[, as.Date(result_x, origin)])
