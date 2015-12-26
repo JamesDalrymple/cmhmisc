@@ -28,7 +28,6 @@ NULL
 #' @importFrom data.table data.table :=
 #' @importFrom EquaPac as.num
 
-
 los <- NULL # RMD checker appeasement
 #' @export
 #' @rdname los
