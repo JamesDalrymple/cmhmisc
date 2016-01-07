@@ -24,10 +24,8 @@
 #' with a warning message.
 #'
 #' @examples
-#' \dontrun{
 #' cmh_recode("WSH - ACT")
 #' cmh_recode(c("WSH - ACT", "DD Adult"))
-#' }
 #' @importFrom EquaPac recode_string as.chr
 #' @importFrom data.table data.table :=
 #'

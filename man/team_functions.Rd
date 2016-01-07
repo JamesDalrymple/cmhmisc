@@ -56,10 +56,8 @@ need testing, consider adding an automatic "missing" assignment
 with a warning message.
 }
 \examples{
-\dontrun{
 cmh_recode("WSH - ACT")
 cmh_recode(c("WSH - ACT", "DD Adult"))
-}
 }
 \keyword{datasets}
 

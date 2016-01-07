@@ -11,17 +11,18 @@
 #' switch statement.
 #'
 #' @examples
-#' \dontrun{
 #' date_convert(x = c("10/1/2015", "10/2/2015"))
 #' date_convert(x = factor("10/1/2015"))
 #' x <- factor(c("10/1/2014", "10/2/2015", "10/1/2014", NA))
+#' date_convert(x)
 #' x <- c("10/1/2014", "10/2/2015", "10/1/2014", NA)
+#' date_convert(x)
 #' x <- as.Date("10/1/2014", format = "%m/%d/%Y")
 #' date_convert(x)
 #' x <- as.POSIXct(c("2014-10-1", "2015-10-2", NA))
 #' date_convert(x)
+#' date_convert(x = as.Date("2014-10-1"))
 #'
-#' }
 #' @importFrom EquaPac as.chr
 #' @importFrom data.table data.table :=
 #'
@@ -83,7 +84,7 @@ date_convert <-
     switch(
       class(x)[1],
       "Date" = {
-        NULL
+        input_dt[, result_x := date_x]
       },
       "character" = {
         input_dt[, result_x :=
@@ -133,5 +134,5 @@ date_convert <-
                    )]
       }
     )
-    return(input_dt[, as.Date(result_x, origin)])
+    return(input_dt[, as.Date(x = result_x, origin = origin)])
       }
