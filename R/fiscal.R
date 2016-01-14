@@ -13,7 +13,7 @@
 #'
 #' @examples
 #' my_fy("10/1/2014")
-#' my_qtr("9/30/2015)
+#' my_qtr("9/30/2015")
 #' @return A character vector.
 #'
 #' @note Consider making a new fiscal_year class and/or fiscal_quarter class.

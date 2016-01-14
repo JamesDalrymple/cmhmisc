@@ -33,4 +33,8 @@ fiscal year, fiscal quarter, month functions for dealing with
 Consider making a new fiscal_year class and/or fiscal_quarter class.
 Also consider making some methods (this needs further consideration).
 }
+\examples{
+my_fy("10/1/2014")
+my_qtr("9/30/2015")
+}
 
