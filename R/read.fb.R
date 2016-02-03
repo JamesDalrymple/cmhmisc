@@ -19,7 +19,7 @@
 #' lapply(my_fb_dt, class)
 #' attributes(my_fb_dt)
 #' }
-#' @importFrom EquaPac p_stop fn %nin%
+#' @importFrom EquaPac p_stop %nin%
 #' @importFrom data.table data.table last := .SD fread
 
 #' @name read.fb
@@ -103,7 +103,6 @@ read_header <- function(file_path) {
 #' @rdname read.fb
 #' @export
 read.fb <- function(file_path) {
-  # fn <- EquaPac:::fn # for now, may revisit this fn() later in EquaPac
   V1 <- V2 <- col_values <- incoming_dt <- NULL # checker appeasment
   attr_DT <- read_header(file_path)
   DT <- fread(input = file_path, showProgress = FALSE)
