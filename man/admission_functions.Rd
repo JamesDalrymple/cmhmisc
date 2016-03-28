@@ -6,8 +6,7 @@
 \title{WCCMH admission functions}
 \usage{
 overlap_combine(overlap_dt, id_cols, team_col, start_col, end_col,
-  overlap_int = 1L, replace_blanks = Sys.Date(),
-  priority_col = "priority")
+  overlap_int = 1L, replace_blanks = Sys.Date())
 }
 \arguments{
 \item{overlap_dt}{A data.table object.}
@@ -25,9 +24,6 @@ replaced, see parameter replace_blanks}
 
 \item{replace_blanks}{If end_col has missing values, they will be replaced
 with this value. Defaults to Sys.Date().}
-
-\item{priority_col}{The name of the field in overlap_dt corresponding to
-priority. Each team needs to have a predefined unique priority.}
 }
 \value{
 A data.table with fixed admission records. May contain more rows
@@ -41,6 +37,7 @@ This could be cleaned. This could be a part II to EquaPac::overlap_fix_dt
 }
 \examples{
 \dontrun{
+# EXAMPLE IS OUTDATED ---
 input <- data.table(
 person_ID = c(rep(98723, 4), rep(8534, 2), 11223, rep(22446, 3)),
 team = c(rep("A", 4), rep("B", 2), "A", "B", "A", "C"),

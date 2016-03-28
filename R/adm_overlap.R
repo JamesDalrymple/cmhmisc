@@ -10,8 +10,6 @@
 #' @param overlap_int An integer, default value of 1, to find consecutive records.
 #' @param replace_blanks If end_col has missing values, they will be replaced
 #' with this value. Defaults to Sys.Date().
-#' @param priority_col The name of the field in overlap_dt corresponding to
-#' priority. Each team needs to have a predefined unique priority.
 #'
 #' @return A data.table with fixed admission records. May contain more rows
 #' than original dataset.
@@ -20,6 +18,7 @@
 #'
 #' @examples
 #' \dontrun{
+#' # EXAMPLE IS OUTDATED ---
 #' input <- data.table(
 #' person_ID = c(rep(98723, 4), rep(8534, 2), 11223, rep(22446, 3)),
 #' team = c(rep("A", 4), rep("B", 2), "A", "B", "A", "C"),
@@ -53,11 +52,16 @@ NULL
 #' @rdname admission_functions
 overlap_combine <-
   function(overlap_dt, id_cols, team_col, start_col, end_col, overlap_int = 1L,
-           replace_blanks = Sys.Date(), priority_col = "priority") {
+           replace_blanks = Sys.Date()) {
+    # overlap_dt = modify$cmh_core[case_no == 10450]
     # options(warn=2)
     # overlap_dt = copy(modify$cmh_core[case_no == 11660])
     # overlap_dt = copy(modify$cmh_core[case_no == 10563])
+    # overlap_dt = copy(modify$cmh_core[case_no == 11091])
     setorderv(overlap_dt, c(id_cols, team_col, start_col))
+    if (any(names(overlap_dt) == "end_col")) {
+      overlap_dt[, end_col := NULL]
+    }
     overlap_dt[, end_col := get(end_col) + overlap_int]
     sd_cols <- c(start_col, "end_col")
     overlap_dt[is.na(end_col), end_col := replace_blanks]
@@ -160,6 +164,11 @@ overlap_combine <-
               by.x = c(id_cols, "start_date", "end_date"),
               by.y = c(id_cols, "start_date", "end_date")
     )
+    # remove records that have 'lower' priority and are completely 'within'
+    messy_ovr_dt[, remove_record := ifelse(priority > i.priority &
+      start_date > i.start_date & end_date < i.end_date, TRUE, FALSE)]
+    messy_ovr_dt[start_date >= i.start_date & end_date <= i.end_date &
+                   priority > i.priority, remove_record := TRUE]
     # keep non-duplicate + needed records
     messy_ovr_dt[(index == i.index | priority <= i.priority) & !(i.start_date >
       start_date & i.end_date < end_date & priority > i.priority),
@@ -182,9 +191,6 @@ overlap_combine <-
       messy_ovr_dt <-
         rbindlist(list(messy_ovr_dt, messy_add_dt), use.names = TRUE,fill = TRUE)
     }
-    # remove records that have 'lower' priority and are completely 'within'
-    messy_ovr_dt[, remove_record := ifelse(priority > i.priority &
-       start_date > i.start_date & end_date < i.end_date, TRUE, FALSE)]
     messy_ovr_dt[, n_index := .N, by = index]
     messy_ovr_dt[, n_na := sum(is.na(i.start_date)), by = index]
     messy_ovr_dt[n_index > 1 & is.na(i.start_date) & n_na < n_index,
@@ -196,6 +202,7 @@ overlap_combine <-
     # case 1
     messy_ovr_dt[priority > i.priority &
                 start_date <= i.end_date &
+                start_date >= i.start_date &
                 end_date > i.start_date,
                 start_date := i.end_date + 1, by = index]
     # case 2
