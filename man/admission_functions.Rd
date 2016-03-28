@@ -40,6 +40,7 @@ standardize admission data
 This could be cleaned. This could be a part II to EquaPac::overlap_fix_dt
 }
 \examples{
+\dontrun{
 input <- data.table(
 person_ID = c(rep(98723, 4), rep(8534, 2), 11223, rep(22446, 3)),
 team = c(rep("A", 4), rep("B", 2), "A", "B", "A", "C"),
@@ -49,9 +50,11 @@ end_date = as.Date(c("2010-5-23", NA, "2015-01-02", "2013-3-2", "2009-12-31",
 "2010-3-1", "2015-03-22", "2016-1-2", "2014-9-30", "2016-3-22")))
 team_priority <- data.table(team = c("A", "B", "C"), priority = c(1, 2, 3))
 input[team_priority, priority := i.priority, on = "team"]
-overlap_combine(overlap_dt = copy(input[team!="C"]), id_cols = "person_ID",
+
+test <- overlap_combine(overlap_dt = copy(input[team!="C"]), id_cols = "person_ID",
  team_col = "team", start_col = "start_date", end_col = "end_date",
  overlap_int = 1L, replace_blanks = Sys.Date() + 1e3,
  priority_col = "priority")
+ }
 }
 
