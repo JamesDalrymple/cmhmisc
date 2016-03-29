@@ -58,6 +58,9 @@ overlap_combine <-
     # overlap_dt = copy(modify$cmh_core[case_no == 11660])
     # overlap_dt = copy(modify$cmh_core[case_no == 10563])
     # overlap_dt = copy(modify$cmh_core[case_no == 11091])
+    # overlap_dt = copy(modify$cmh_core[case_no == 220766])
+
+
     setorderv(overlap_dt, c(id_cols, team_col, start_col))
     if (any(names(overlap_dt) == "end_col")) {
       overlap_dt[, end_col := NULL]
