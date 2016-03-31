@@ -1,4 +1,4 @@
-#' @title Funding Bucket Date
+#' @title Funding Bucket Data
 #'
 #' @description Encompass database is lacking unit type data for SALs,
 #' this fixes that issue; last updated 11/3/2015.
@@ -7,13 +7,8 @@
 #' Last updated 11/23/2015.
 #'
 #' @docType data
-#'
-# #' @usage fb_unit_type
-# #' @usage fb_cpt_mod_cost
 #' @format A data.table object.
-#'
 #' @keywords datasets
-#'
 #' @source Funding Bucket Report from PCE.
 #'
 #' @examples

@@ -5,7 +5,7 @@
 \alias{fb_cpt_mod_cost}
 \alias{fb_data}
 \alias{fb_unit_type}
-\title{Funding Bucket Date}
+\title{Funding Bucket Data}
 \format{A data.table object.}
 \source{
 Funding Bucket Report from PCE.
