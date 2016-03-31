@@ -154,11 +154,11 @@ priority_overlap <- function(overlap_dt,
                              overlap_int = 1L,
                              replace_blanks = Sys.Date()+999) {
   # overlap_dt = copy(overlap_dt)
-  # group_cols = Cs(type, case_no)
-  # priority_col = "team"
+  # group_cols = Cs(case_no, cmh_effdt)
+  # priority_col = "cmh_team"
   # priority_value = "priority"
-  # start_col = "start_date"
-  # end_col = "end_date"
+  # start_col = "team_effdt"
+  # end_col = "team_expdt"
 
   # fix 'easier' issues first with simple min/max
   overlap_dt <- overlap_combine(
@@ -245,11 +245,11 @@ priority_overlap <- function(overlap_dt,
                i.end_date < end_date, add_record := "split record both sides"]
   # case 3: higher priority followed by overlapping lower
   messy_ovr_dt[p_integer > i.p_integer & start_date < i.start_date &
-    end_date <= i.end_date,
+    end_date <= i.end_date & i.start_date <= end_date,
     add_record := "shorten right side"]
   # case 4b: lower priority followed by overlapping higher priority
-  messy_ovr_dt[p_integer > i.p_integer & start_date >= i.start_date &
-    start_date < i.end_date & i.end_date < end_date,
+  messy_ovr_dt[p_integer > i.p_integer & start_date > i.start_date &
+    start_date <= i.end_date & i.end_date < end_date,
     add_record := "shorten left side"]
   # case 5: no overlap (shouldnt really show up)
   messy_ovr_dt[end_date < i.start_date, add_record := "no overlap"]
@@ -258,15 +258,29 @@ priority_overlap <- function(overlap_dt,
   # messy_ovr_dt[p_integer < i.p_integer & start_date < i.end_date &
     # end_date > i.end_date, add_record := "add record left of p_col"]
   messy_ovr_dt[, new_index := .I]
+  # cases in the middle of a split need to be discarded
   setkeyv(messy_ovr_dt, c(group_cols, "start_date", "end_date", "add_record"))
-
   rm_index <- messy_ovr_dt[messy_ovr_dt[add_record == "split record both sides",
     unique(.SD), .SDcols = c(group_cols, "start_date", "end_date")]][
       add_record == "do not change", new_index]
   messy_ovr_dt <- setkey(messy_ovr_dt, new_index)[!rm_index]
-  rm(rm_index)
+  # cases in the right side need to have the rule consistently applied
+  setkeyv(messy_ovr_dt, c(group_cols, "start_date", "end_date", "add_record"))
+  change_index <- messy_ovr_dt[messy_ovr_dt[add_record == "shorten right side",
+    unique(.SD), .SDcols = c(group_cols, "start_date", "end_date")]][
+      is.na(add_record), new_index]
+  setkey(messy_ovr_dt, new_index)[change_index, add_record := "shorten right side"]
+  rm(change_index)
+  # cases in the left side need to have the rule consistently applied
+  setkeyv(messy_ovr_dt, c(group_cols, "start_date", "end_date", "add_record"))
+  change_index <- messy_ovr_dt[messy_ovr_dt[add_record == "shorten left side",
+    unique(.SD), .SDcols = c(group_cols, "start_date", "end_date")]][
+      is.na(add_record), new_index]
+  setkey(messy_ovr_dt, new_index)[change_index, add_record := "shorten left side"]
+  rm(change_index, rm_index)
   setkey(messy_ovr_dt, NULL)
   split_recs <- messy_ovr_dt[add_record == "split record both sides"]
+  split_recs[, index := -index]
   messy_ovr_dt <- messy_ovr_dt[add_record %nin% "split record both sides"]
   messy_ovr_dt <- rbindlist(list(messy_ovr_dt,
                  copy(split_recs[, add_record := "shorten left side"]),
@@ -276,20 +290,32 @@ priority_overlap <- function(overlap_dt,
     start_date := i.end_date + 1]
   messy_ovr_dt[add_record == "shorten right side",
                end_date := i.start_date - 1]
-  messy_ovr_dt[like(add_record, "shorten left side"),
-               start_date := max(start_date), by = c(group_cols, "p_col")]
-  messy_ovr_dt[like(add_record, "shorten right side"),
-               end_date := min(end_date), by = c(group_cols, "p_col")]
+  # records were separated via foverlaps; rejoining now ---
+
+  messy_ovr_dt[index > 0, # avoiding combing split records
+               Cs(start_date, end_date) :=
+               list(max(start_date),
+                    min(end_date)),
+               by = c(group_cols, "p_col", "index")]
+  # AS IS, FLAWED! James 3/31/2016 6:03 PM ---
+  # messy_ovr_dt[like(add_record, "shorten left side"),
+  #             start_date := max(start_date), by = c(group_cols, "p_col")]
+  #messy_ovr_dt[like(add_record, "shorten right side"),
+  #             end_date := min(end_date), by = c(group_cols, "p_col")]
   messy2 <- messy_ovr_dt[, unique(.SD),
     .SDcols = c(group_cols, Cs(p_col, start_date,
     end_date, p_integer, end_col, index, add_record))]
   setorderv(messy2, c(group_cols, "start_date", "end_date"))
   messy2[, add_record := NULL]
-
   fixed_dt <- rbindlist(list(clean_dt, messy2), use.names = TRUE)
+  fixed_dt[, Cs(end_col, index) := NULL]
   setnames(fixed_dt, "p_col", priority_col)
   setnames(fixed_dt, "p_integer", priority_value)
-  fixed_dt[, end_col := NULL]
+  setkeyv(fixed_dt, c(group_cols, "start_date", "end_date"))
+  setnames(fixed_dt, "start_date", start_col)
+  setnames(fixed_dt, "end_date", end_col)
+  setkey(fixed_dt, NULL)
+  fixed_dt <- unique(fixed_dt)
   return(fixed_dt)
 }
 
