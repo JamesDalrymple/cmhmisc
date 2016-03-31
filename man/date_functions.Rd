@@ -3,12 +3,15 @@
 \name{date_functions}
 \alias{.date_convert}
 \alias{date_convert}
+\alias{date_expansion}
 \alias{date_functions}
 \title{WCCMH date functions}
 \usage{
 .date_convert(x, format, origin)
 
 date_convert(x, format = NULL, origin = "1970-01-01")
+
+date_expansion(start_date, end_date, types = c("qtr", "mon", "fy"))
 }
 \arguments{
 \item{x}{A character vector of dates.}
@@ -16,6 +19,15 @@ date_convert(x, format = NULL, origin = "1970-01-01")
 \item{format}{The format of the incoming date.}
 
 \item{origin}{The origin (day 1) for the date.}
+
+\item{start_date}{The start date for date_expansion, must become a date if
+not already one via date_convert function.}
+
+\item{end_date}{The end date for date_expansion, must become a date if
+not already one via date_convert function.}
+
+\item{types}{A character vector defining which types to be returned. Choices are
+any combination of c("fy", "qtr", "mon"). Default is all.}
 }
 \value{
 A vector of dates of class 'Date'.
@@ -29,16 +41,17 @@ perhapse a better method exists. Also, today:  use S3 methods instead of a
 switch statement.
 }
 \examples{
-\dontrun{
 date_convert(x = c("10/1/2015", "10/2/2015"))
 date_convert(x = factor("10/1/2015"))
 x <- factor(c("10/1/2014", "10/2/2015", "10/1/2014", NA))
+date_convert(x)
 x <- c("10/1/2014", "10/2/2015", "10/1/2014", NA)
+date_convert(x)
 x <- as.Date("10/1/2014", format = "\%m/\%d/\%Y")
 date_convert(x)
 x <- as.POSIXct(c("2014-10-1", "2015-10-2", NA))
 date_convert(x)
-
-}
+date_convert(x = as.Date("2014-10-1"))
+date_expansion(start_date = "10/1/2014", end_date = "9/30/2015")
 }
 

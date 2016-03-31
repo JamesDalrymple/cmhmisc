@@ -18,8 +18,9 @@ class.}
 
 \item{format}{The format of the date, passed to date_convert.}
 
-\item{fy_start}{The month the fiscal year starts. Must be coerceable to
-'Date' via zoo package.}
+\item{fy_start}{The month the fiscal year starts. May be abbreviated to
+three letters or be the full name of the month. The three-letter
+abbreviation must match the package zoo's abbreviations.}
 }
 \value{
 A character vector.
@@ -33,8 +34,7 @@ Consider making a new fiscal_year class and/or fiscal_quarter class.
 Also consider making some methods (this needs further consideration).
 }
 \examples{
-\dontrun{
-1+1
-}
+my_fy("10/1/2014")
+my_qtr("9/30/2015")
 }
 

@@ -24,10 +24,8 @@
 #' with a warning message.
 #'
 #' @examples
-#' \dontrun{
 #' cmh_recode("WSH - ACT")
 #' cmh_recode(c("WSH - ACT", "DD Adult"))
-#' }
 #' @importFrom EquaPac recode_string as.chr
 #' @importFrom data.table data.table :=
 #'
@@ -41,7 +39,7 @@ cmh_team_key <- list(
   MI = c("WSH - MI - Adult", "WSH - ATO", "MI", "MI Adult"),
   Child = c("Child", "WSH - Children's Services", "Children's Services"),
   "Child HB" = c("WSH - Children's Services - Home Based", "Child HB",
-                 "Home Based"),
+                 "Home Based", "Child Home Based"),
   PORT = c("WSH - PATH/PORT"),
   Access = c("Community Support and Treatment Services - CSTS",
              "CSTS", "WSH - Access/Engagement", "Access",

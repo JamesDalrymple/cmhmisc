@@ -7,13 +7,13 @@
 #' @param x 'Date' vector or a character vector that can be coerced to 'Date'
 #' class.
 #' @param format The format of the date, passed to date_convert.
-#' @param fy_start The month the fiscal year starts. Must be coerceable to
-#' 'Date' via zoo package.
+#' @param fy_start The month the fiscal year starts. May be abbreviated to
+#' three letters or be the full name of the month. The three-letter
+#' abbreviation must match the package zoo's abbreviations.
 #'
 #' @examples
-#' \dontrun{
-#' 1+1
-#' }
+#' my_fy("10/1/2014")
+#' my_qtr("9/30/2015")
 #' @return A character vector.
 #'
 #' @note Consider making a new fiscal_year class and/or fiscal_quarter class.
