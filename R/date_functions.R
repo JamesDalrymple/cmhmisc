@@ -134,4 +134,10 @@ date_convert <-
       }
     )
     return(input_dt[, as.Date(result_x, origin)])
-      }
+  }
+
+# Idea for later... expand this to use date_convert?
+# americanize_date <- function(x) {
+#   stopifnot(class(x) == "Date")
+#   format(x, "%m/%d/%Y")
+# }

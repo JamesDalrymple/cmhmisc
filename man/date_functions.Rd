@@ -25,7 +25,8 @@ standardize date classes
 }
 \note{
 .date_convert could be moved to C++. lapply() loses the class 'Date',
-perhapse a better method exists.
+perhapse a better method exists. Also, today:  use S3 methods instead of a
+switch statement.
 }
 \examples{
 \dontrun{
