@@ -205,10 +205,15 @@ data(overlap_dt)
       # we assign end_col <- start_col
 
 
-      d[, difftime := difftime(as.Date(strcol), as.Date(endcol)) < 0]
+      d[, dftm := difftime(as.Date(endcol), as.Date(strcol))]
+
+      if (d[, any(dftm < 0)]) {
+        f <- function(x) paste(x, collapse = " ")
+        p_v <- d[dftm > 0, paste0(apply(.SD, 1, f), collapse = ", "), .SDc = PK_v]
+        warning(fn(), "Primary key vectors, ", p_v, " have reversed dates. ")
+      }
 
 
-      if ( d[, difftime(as.Date(endcol), as.Date(strcol))] ))
       d[endcol - strcol < 0, endcol := strcol]
       as.Date(d$strcol)
 
