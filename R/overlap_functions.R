@@ -59,7 +59,7 @@
 NULL
 
 # R CMD checker appeasement ---
-.SD <- .SDcols <- team <- date_value <- priority <- index <- i.index <-
+team <- date_value <- priority <- index <- i.index <-
   i.start_date <- i.end_col <- start_date <- end_date <- ovr_vec <- xid <-
   yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <- remove_record <-
   p_integer <- i.p_integer <- grp_id <- .GRP <- grp_n <- add_record <-
@@ -136,6 +136,140 @@ overlap_combine <-
     overlap_dt <- unique(overlap_dt)
     return(overlap_dt)
   }
+
+if (FALSE) {
+# overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
+# overlap_dt[, start_date := as.Date(start_date, format = 'm/%d/%Y' )]
+# overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
+# overlap_dt[, priority := as.int(priority)]
+# save(overlap_dt,
+#  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
+# load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
+data(overlap_dt)
+
+  # how to fix if priorities are not to be accounted for...
+  test1 <- overlap_combine(overlap_dt = overlap_dt,
+                           group_cols = c("case_no", "team"),
+                           start_col = "start_date",
+                           end_col = "end_date",
+                           overlap_int = 1L,
+                           replace_blanks = Sys.Date() + 1e3)
+
+  if (F) {
+    # copy(overlap_dt)
+
+    overlap_dt = copy(overlap_dt)
+    overlap_dt[, start_date := as.Date(.I)]
+    group_cols = c("case_no", "team")
+    start_col = "start_date"
+    end_col = "end_date"
+    overlap_int = 1L
+    replace_blanks = Sys.Date() + 1e3
+  }
+
+  overlap_combine <-
+    function(overlap_dt, group_cols, start_col,
+             end_col, overlap_int = 1L, replace_blanks = Sys.Date()) {
+      d <- copy(overlap_dt)[, .SD, .SDc = c(start_col, end_col, group_cols)]
+      PK_v <- paste0("pk", seq(group_cols))
+      SD_v <- Cs(strcol, endcol)
+      setnames(d, c(SD_v, PK_v))
+
+      # type case_no team start_date end_date priority end_col
+
+      # overlap_dt = modify$cmh_core[case_no == 10450]
+      # options(warn=2)
+      # overlap_dt = copy(modify$cmh_core[case_no == 11660])
+      # overlap_dt = copy(modify$cmh_core[case_no == 10563])
+      # overlap_dt = copy(modify$cmh_core[case_no == 11091])
+      # overlap_dt = copy(modify$cmh_core[case_no == 220766])
+      # setorderv(d, c(group_cols, start_col))
+
+
+      # if (any(names(d) == "end_col")) {
+      #   d[, end_col := NULL]
+      #   p_warn("You had a column labeled end_col which conflicts with
+      #          overlap_comb. It was deleted and re-created based on the end_col
+      #          parameter.")
+      # }
+
+      d[,  Cs(strcol, endcol) := .(strcol + overlap_int,
+                                   endcol + overlap_int)]
+      # plyr:::`.`
+
+      # d[, end_col := get(end_col) + overlap_int]
+      # sd_cols <- c(start_col, "end_col")
+      d[is.na(endcol), endcol := replace_blanks] #CHECK use better name.
+
+      # note: if end_col becomes < start_col due to overlap_int,
+      # we assign end_col <- start_col
+
+
+      d[, difftime := difftime(as.Date(strcol), as.Date(endcol)) < 0]
+
+
+      if ( d[, difftime(as.Date(endcol), as.Date(strcol))] ))
+      d[endcol - strcol < 0, endcol := strcol]
+      as.Date(d$strcol)
+
+      d[, index := .I]
+      setnames(d, start_col, "start_date")
+      setnames(d, end_col, "end_date")
+      # finding overlapping combinations via vectors of indices ---
+      c_overlap <-
+        d[d[, unique(.SD), .SDcols =
+                                c(group_cols, "start_date", "end_col", "index")],
+                   on = group_cols, allow.cartesian = TRUE]
+      c_overlap <- c_overlap[i.index != index]
+      c_overlap[between(i.start_date, start_date, end_col) |
+                  between(i.end_col, start_date, end_col),
+                ovr_vec := list(list(unique(c(index, i.index)))),
+                by = c(group_cols, "start_date")]
+
+      if (!is.null(c_overlap$ovr_vec)) {
+        ovr_l <- c_overlap[, ovr_vec]
+        ovr_l <- Filter(Negate(function(x) is.null(unlist(x))), ovr_l)
+        ovr_l <- unique(ovr_l)
+        # find list of reduced vectors which we need to MIN/MAX ---
+        ovr_red_l <- list()
+        for (i in seq_along(ovr_l)) {
+          tmp_inter <- unique(as.vector(unlist(sapply(
+            ovr_l,
+            FUN = function(x) {
+              if (length(intersect(unlist(x), unlist(ovr_l[i]))) > 0) {
+                result <- union(unlist(x), unlist(ovr_l[i]))
+                return(result)
+              } else {
+                return(ovr_l[i])
+              }
+            }
+          ))))
+          ovr_red_l[[i]] <- sort(tmp_inter)
+        }
+        ovr_red_l <- unique(ovr_red_l)
+
+        for (i in seq(ovr_red_l)) {
+          setkey(d, index)[ovr_red_l[[i]],
+                                    c("start_date", "end_date", "end_col") :=
+                                      list(min(start_date), max(end_date), max(end_col))]
+        }
+      }
+      d[, index := NULL]
+      d <- unique(d)
+      return(d)
+    }
+
+  # how to fix if priorities are to be accounted for...
+  test2 <- priority_overlap(overlap_dt = copy(overlap_dt),
+                            group_cols = "person_ID",
+                            priority_col = "team",
+                            priority_value = "priority",
+                            start_col = "start_date",
+                            end_col = "end_date",
+                            overlap_int = 1L,
+                            replace_blanks = Sys.Date())
+
+}
 
 
     # figure out which intervals are overlapping with different team priorities
