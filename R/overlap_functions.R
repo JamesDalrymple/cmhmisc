@@ -25,15 +25,14 @@
 #' code-optimized yet.
 #'
 #' @examples
-#' \dontrun{
 #' # overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-#' # overlap_dt[, start_date := as.Date(start_date, format = 'm/%d/%Y' )]
+#' # overlap_dt[, start_date := as.Date(start_date, format = '%m/%d/%Y')]
 #' # overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
-#' # overlap_dt[, priority := as.int(priority)]
+#' # overlap_dt[, priority := as.integer(priority)]
 #' # save(overlap_dt,
 #' #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
 #' # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-#' # data(overlap_dt)
+#' data(overlap_dt)
 #'
 #' # how to fix if priorities are not to be accounted for...
 #' test1 <- overlap_combine(overlap_dt = overlap_dt, group_cols = c("case_no",
@@ -49,21 +48,18 @@
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
 #'                  replace_blanks = Sys.Date())
-#'
-#'
-#'  }
-#' @importFrom data.table data.table := rbindlist copy setnames setorderv dcast shift melt between setkeyv foverlaps .N .GRP like
+#' @import data.table
 #' @importFrom Hmisc Cs
 #' @importFrom EquaPac p_warn
 #' @name overlap_functions
 NULL
 
 # R CMD checker appeasement ---
-team <- date_value <- priority <- index <- i.index <-
-  i.start_date <- i.end_col <- start_date <- end_date <- ovr_vec <- xid <-
-  yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <- remove_record <-
-  p_integer <- i.p_integer <- grp_id <- .GRP <- grp_n <- add_record <-
-  new_index <- p_col <- NULL
+
+index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
+  ovr_vec <- xid <- yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <-
+  remove_record <- p_integer <- i.p_integer <- grp_id <- .GRP <- grp_n <-
+  add_record <- new_index <- p_col <- NULL
 
 # general overlap date fixing -------------------------------------------------
 #' @export
@@ -77,7 +73,7 @@ overlap_combine <-
     # overlap_dt = copy(modify$cmh_core[case_no == 10563])
     # overlap_dt = copy(modify$cmh_core[case_no == 11091])
     # overlap_dt = copy(modify$cmh_core[case_no == 220766])
-    setorderv(overlap_dt, c(group_cols, start_col))
+    # setorderv(overlap_dt, c(group_cols, start_col))
     if (any(names(overlap_dt) == "end_col")) {
       overlap_dt[, end_col := NULL]
       p_warn("You had a column labeled end_col which conflicts with
@@ -203,7 +199,6 @@ data(overlap_dt)
 
       # note: if end_col becomes < start_col due to overlap_int,
       # we assign end_col <- start_col
-
 
       d[, dftm := difftime(as.Date(endcol), as.Date(strcol))]
 

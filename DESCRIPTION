@@ -7,7 +7,7 @@ Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role =
 Maintainer: J Dalrymple <dalrymplej@ewashtenaw.org>
 Description: Convenience functions to speed code writing at WCCMH.
 Depends:
-    R (>= 3.2.2),
+    R (>= 3.2.4),
     data.table (>= 1.9.6),
     EquaPac,
     Hmisc,

@@ -49,15 +49,14 @@ loop that could possibly be avoided via Reduce, not sure. adm_overlap is not
 code-optimized yet.
 }
 \examples{
-\dontrun{
 # overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-# overlap_dt[, start_date := as.Date(start_date, format = 'm/\%d/\%Y' )]
+# overlap_dt[, start_date := as.Date(start_date, format = '\%m/\%d/\%Y')]
 # overlap_dt[, end_date := as.Date(end_date, format = "\%m/\%d/\%Y")]
-# overlap_dt[, priority := as.int(priority)]
+# overlap_dt[, priority := as.integer(priority)]
 # save(overlap_dt,
 #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
 # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-# data(overlap_dt)
+data(overlap_dt)
 
 # how to fix if priorities are not to be accounted for...
 test1 <- overlap_combine(overlap_dt = overlap_dt, group_cols = c("case_no",
@@ -73,8 +72,5 @@ test2 <- priority_overlap(overlap_dt = copy(overlap_dt),
                  end_col = "end_date",
                  overlap_int = 1L,
                  replace_blanks = Sys.Date())
-
-
- }
 }
 
