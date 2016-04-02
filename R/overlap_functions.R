@@ -1,7 +1,10 @@
 #' @title WCCMH admission functions
-#' @description standardize admission data
+#' @description These functions are for datasets that have integer or date
+#' columns that need to be combined by some unique grouping or with the
+#' additional constraint of a priority column when the priority column causes
+#' an overlap outside of the unique grouping but within the priority column.
 #'
-#' @param overlap_dt A data.table object.
+#' @param dt A data.table object with collapsable records.
 #' @param group_cols A group of columns which will collectively make a key on
 #' which to group by when reducing/collapsing the data.table object.
 #' @param priority_col A single column which will have a priority assignment.
@@ -9,10 +12,10 @@
 #' higher priorities. May be numeric if coerceable to integer.
 #' @param start_col The start date for record. Blanks not allowed.
 #' @param end_col The end date for the record. Blanks will be replaced, see
-#' parameter replace_blanks
+#' parameter user_rep_blanks
 #' @param overlap_int An integer, default value of 1, to find consecutive
 #' records.
-#' @param replace_blanks If end_col has missing values, they will be replaced
+#' @param user_rep_blanks If end_col has missing values, they will be replaced
 #' with this value. Defaults to Sys.Date().
 #'
 #' @return overlap_combine returns a reduced/collapsed data.table object based
@@ -20,34 +23,33 @@
 #' priority_overlap returns a data.table with fixed records based on priority
 #' team assignment. May contain more rows than original dataset.
 #'
-#' @note overlap_combine is relatively fast/optimized, although there is a for
-#' loop that could possibly be avoided via Reduce, not sure. adm_overlap is not
-#' code-optimized yet.
+#' @note Do not have dt columns named strdt, enddt, pk_1, pk_2, ... You have
+#' been warned!
 #'
 #' @examples
-#' # overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-#' # overlap_dt[, start_date := as.Date(start_date, format = '%m/%d/%Y')]
-#' # overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
-#' # overlap_dt[, priority := as.integer(priority)]
-#' # save(overlap_dt,
-#' #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-#' # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-#' data(overlap_dt)
+#' # ex_overlap <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
+#' # ex_overlap[, start_date := as.Date(start_date, format = '%m/%d/%Y')]
+#' # ex_overlap[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
+#' # ex_overlap[, priority := as.integer(priority)]
+#' # save(ex_overlap,
+#' #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
+#' # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
+#' data(ex_overlap)
 #'
 #' # how to fix if priorities are not to be accounted for...
-#' test1 <- overlap_combine(overlap_dt = overlap_dt, group_cols = c("case_no",
+#' test1 <- overlap_combine(overlap_dt = ex_overlap, group_cols = c("case_no",
 #' "team"), start_col = "start_date", end_col = "end_date",
-#'  overlap_int = 1L, replace_blanks = Sys.Date() + 1e3)
+#'  overlap_int = 1L, user_rep_blanks = Sys.Date() + 1e3)
 #'
 #'  # how to fix if priorities are to be accounted for...
-#' test2 <- priority_overlap(overlap_dt = copy(overlap_dt),
+#' test2 <- priority_overlap(overlap_dt = copy(ex_overlap),
 #'                  group_cols = "person_ID",
 #'                  priority_col = "team",
 #'                  priority_value = "priority",
 #'                  start_col = "start_date",
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
-#'                  replace_blanks = Sys.Date())
+#'                  user_rep_blanks = Sys.Date())
 #' @import data.table
 #' @importFrom Hmisc Cs
 #' @importFrom EquaPac p_warn
@@ -65,33 +67,33 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
 #' @export
 #' @rdname overlap_functions
 overlap_combine <-
-  function(overlap_dt, group_cols, start_col, end_col, overlap_int = 1L,
-           replace_blanks = Sys.Date()) {
-    # overlap_dt = modify$cmh_core[case_no == 10450]
+  function(dt, group_cols, start_col, end_col, overlap_int = 1L,
+           user_rep_blanks = Sys.Date()) {
+    # dt = modify$cmh_core[case_no == 10450]
     # options(warn=2)
-    # overlap_dt = copy(modify$cmh_core[case_no == 11660])
-    # overlap_dt = copy(modify$cmh_core[case_no == 10563])
-    # overlap_dt = copy(modify$cmh_core[case_no == 11091])
-    # overlap_dt = copy(modify$cmh_core[case_no == 220766])
-    # setorderv(overlap_dt, c(group_cols, start_col))
-    if (any(names(overlap_dt) == "end_col")) {
-      overlap_dt[, end_col := NULL]
+    # dt = copy(modify$cmh_core[case_no == 11660])
+    # dt = copy(modify$cmh_core[case_no == 10563])
+    # dt = copy(modify$cmh_core[case_no == 11091])
+    # dt = copy(modify$cmh_core[case_no == 220766])
+    # setorderv(dt, c(group_cols, start_col))
+    if (any(names(dt) == "end_col")) {
+      dt[, end_col := NULL]
       p_warn("You had a column labeled end_col which conflicts with
              overlap_comb. It was deleted and re-created based on the end_col
              parameter.")
     }
-    overlap_dt[, end_col := get(end_col) + overlap_int]
+    dt[, end_col := get(end_col) + overlap_int]
     sd_cols <- c(start_col, "end_col")
-    overlap_dt[is.na(end_col), end_col := replace_blanks]
+    dt[is.na(end_col), end_col := user_rep_blanks]
     # note: if end_col becomes < start_col due to overlap_int,
     # we assign end_col <- start_col
-    overlap_dt[end_col - get(start_col) < 0, end_col := start_col]
-    overlap_dt[, index := .I]
-    setnames(overlap_dt, start_col, "start_date")
-    setnames(overlap_dt, end_col, "end_date")
+    dt[end_col - get(start_col) < 0, end_col := start_col]
+    dt[, index := .I]
+    setnames(dt, start_col, "start_date")
+    setnames(dt, end_col, "end_date")
     # finding overlapping combinations via vectors of indices ---
     c_overlap <-
-      overlap_dt[overlap_dt[, unique(.SD), .SDcols =
+      dt[dt[, unique(.SD), .SDcols =
                               c(group_cols, "start_date", "end_col", "index")],
                  on = group_cols, allow.cartesian = TRUE]
     c_overlap <- c_overlap[i.index != index]
@@ -123,14 +125,14 @@ overlap_combine <-
       ovr_red_l <- unique(ovr_red_l)
 
       for (i in seq(ovr_red_l)) {
-        setkey(overlap_dt, index)[ovr_red_l[[i]],
+        setkey(dt, index)[ovr_red_l[[i]],
                                   c("start_date", "end_date", "end_col") :=
                                     list(min(start_date), max(end_date), max(end_col))]
       }
     }
-    overlap_dt[, index := NULL]
-    overlap_dt <- unique(overlap_dt)
-    return(overlap_dt)
+    dt[, index := NULL]
+    dt <- unique(dt)
+    return(dt)
   }
 
 if (FALSE) {
@@ -286,7 +288,7 @@ priority_overlap <- function(overlap_dt,
                              start_col,
                              end_col,
                              overlap_int = 1L,
-                             replace_blanks = Sys.Date()+999) {
+                             user_rep_blanks = Sys.Date()+999) {
   # overlap_dt = copy(overlap_dt)
   # group_cols = Cs(case_no, cmh_effdt)
   # priority_col = "cmh_team"
@@ -301,7 +303,7 @@ priority_overlap <- function(overlap_dt,
     start_col = start_col,
     end_col = end_col,
     overlap_int = overlap_int,
-    replace_blanks = replace_blanks
+    user_rep_blanks = user_rep_blanks
   )
   group_cols <- setdiff(group_cols, priority_col)
   setnames(overlap_dt, priority_col, "p_col")
@@ -348,7 +350,7 @@ priority_overlap <- function(overlap_dt,
   clean_dt <- setkey(overlap_dt, index)[!unlist(ovr_pairs_l)]
   retain_cols <- setdiff(names(overlap_dt),
     c("start_date", "end_date", "date_value", "end_col"))
-  messy_ovr_dt[is.na(end_date), end_date := replace_blanks]
+  messy_ovr_dt[is.na(end_date), end_date := user_rep_blanks]
   # self join by overlap (too bad we cant add conditions here) ---
   # messy_ovr_dt[cmh_priority_dt, priority := i.priority, on = "team"]
   setkeyv(messy_ovr_dt, c(group_cols, "start_date", "end_date"))
