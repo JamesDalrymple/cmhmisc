@@ -51,6 +51,7 @@ Do not have dt columns named strdt, enddt, pk_1, pk_2, ... You have
 been warned!
 }
 \examples{
+\dontrun{
 # ex_overlap <-
  fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
 # ex_overlap[, start_date := as.Date(start_date, format = '\%m/\%d/\%Y')]
@@ -59,6 +60,7 @@ been warned!
 # save(ex_overlap,
 #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
 # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
+
 data(ex_overlap)
 
 # how to fix if priorities are not to be accounted for...
@@ -75,5 +77,6 @@ test2 <- priority_overlap(overlap_dt = copy(ex_overlap),
                  end_col = "end_date",
                  overlap_int = 1L,
                  user_rep_blanks = Sys.Date())
+}
 }
 

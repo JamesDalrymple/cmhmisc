@@ -27,6 +27,7 @@
 #' been warned!
 #'
 #' @examples
+#' \dontrun{
 #' # ex_overlap <-
 #'  fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
 #' # ex_overlap[, start_date := as.Date(start_date, format = '%m/%d/%Y')]
@@ -35,6 +36,7 @@
 #' # save(ex_overlap,
 #' #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
 #' # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
+#'
 #' data(ex_overlap)
 #'
 #' # how to fix if priorities are not to be accounted for...
@@ -51,6 +53,7 @@
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
 #'                  user_rep_blanks = Sys.Date())
+#' }
 #' @import data.table
 #' @importFrom Hmisc Cs
 #' @importFrom EquaPac p_warn
@@ -137,14 +140,14 @@ overlap_combine <-
   }
 
 if (FALSE) {
-# overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-# overlap_dt[, start_date := as.Date(start_date, format = 'm/%d/%Y' )]
-# overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
-# overlap_dt[, priority := as.int(priority)]
-# save(overlap_dt,
-#  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-# load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-data(overlap_dt)
+  # overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
+  # overlap_dt[, start_date := as.Date(start_date, format = 'm/%d/%Y' )]
+  # overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
+  # overlap_dt[, priority := as.int(priority)]
+  # save(overlap_dt,
+  #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
+  # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
+  data("ex_overlap")
 
   # how to fix if priorities are not to be accounted for...
   test1 <- overlap_combine(overlap_dt = overlap_dt,
@@ -156,23 +159,76 @@ data(overlap_dt)
 
   if (F) {
     # copy(overlap_dt)
-    data <- copy(data(ex_overlap))
+    data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
+                              "data-sets/ex_admissions.rds"))
+
+
+    # data <- fread(file.path(".", "data","ex_overlap.csv"))
+    # data <- copy(data(ex_overlap))
     # data[, start_date := as.Date(.I)]
-    group_cols = c("case_no", "team")
-    start_col = "start_date"
-    end_col = "end_date"
+    case_col = c("case_no")
+    group_cols = c("cmh_team")
+    start_col = "team_effdt"
+    end_col = "team_expdt"
     overlap_int = 1L
-    replace_blanks = Sys.Date() + 1e3
+    analysis_date = Sys.Date() + 1e3
   }
 
   overlap_combine <-
-    function(data, group_cols, start_col, end_col,
+    function(data, case_col, group_cols, start_col, end_col,
              overlap_int = 1L, analysis_date = Sys.Date()) {
-      d <- copy(data)[, .SD, .SDc = c(start_col, end_col, group_cols)]
-      PK_v <- paste0("pk", seq(group_cols))
+      d <- copy(data)[, .SD, .SDc = c(start_col, end_col, case_col, group_cols)]
+      GS_v <- paste0("grp", seq(group_cols))
       SD_v <- Cs(strcol, endcol)
-      setnames(d, c(SD_v, PK_v))
-      d[, pk := .GRP, by = PK_v]
+      CS_v <- Cs(case)
+      setnames(d, c(SD_v, CS_v, GS_v))
+      set(d, j = SD_v,
+          value = lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
+      if (!inherits(analysis_date, what = "Date"))
+        analysis_date <- as.Date(analysis_date)
+      # d[, pk := .GRP, by = CS_v]
+      d[, uN := uniN(.SD), by = CS_v, .SDc = GS_v]
+      setorderv(d, c(CS_v, GS_v, SD_v))
+      # for (j in SD_v) set(d, j=j, value = as.integer(d[[j]]))
+
+      # d[ case == 11660]
+      # d[uN > 1 & case == 10008, .SD, by = CS_v]
+      # d[uN > 1 & case == 11660, .SD, by = CS_v]
+      #
+      # d[uN > 1 , .SD, by = CS_v]
+      d[case == 11660][order(case, grp1)]
+
+      setkeyv(d, c(SD_v))
+      # foverlaps(copy(.SD), copy(.SD), type = "any", which = TRUE)
+      # d[case == 10008,
+      #   foverlaps(copy(.SD), copy(.SD), type = "any", which = TRUE),
+      #   .SDc = SD_v, by = CS_v]
+
+
+      over_idx <- d[case == 11660,
+        foverlaps(.SD, .SD, type = "any", which = TRUE),
+        .SDc = c(SD_v),
+        by = c(CS_v, GS_v)]
+
+      over_idx[, mids := rowMeans(.SD), .SDc = Cs(xid, yid)]
+      # setnames(over_idx, Cs(xid, yid), Cs(x_sgrp, y_sgrp))
+      over_idx
+
+      setorderv(over_idx, c(CS_v, GS_v, "mids"))
+
+      over_idx[, newgrp := mids - shift(mids, n = 1, type = "lag") >= 1, by = grp]
+      over_idx[is.na(newgrp), newgrp := TRUE]
+      over_idx[, host_stay := cumsum(newgrp)]
+
+      ON <- c(grp = 'grp', sgrp = 'x_sgrp')
+      state_hosp[over_idx, host_stay := host_stay, on = ON]
+      date_nvec <- Cs(hosp_start, hosp_expire)
+      for (j in date_nvec) {
+        set(state_hosp, j=j, value = as.Date(state_hosp[[j]], origin = "1970-01-01"))
+      }
+
+
+
 
       # type case_no team start_date end_date priority end_col
 
@@ -183,16 +239,14 @@ data(overlap_dt)
       # overlap_dt = copy(modify$cmh_core[case_no == 11091])
       # overlap_dt = copy(modify$cmh_core[case_no == 220766])
       # setorderv(d, c(group_cols, start_col))
-
-
       # if (any(names(d) == "end_col")) {
       #   d[, end_col := NULL]
       #   p_warn("You had a column labeled end_col which conflicts with
-      #          overlap_comb. It was deleted and re-created based on the end_col
+      #  overlap_comb. It was deleted and re-created based on the end_col
       #          parameter.")
       # }
 
-      d[,  Cs(strcol, endcol) := .(strcol + overlap_int, endcol + overlap_int)]
+      d[, Cs(strcol, endcol) := .(strcol + overlap_int, endcol + overlap_int)]
       # plyr:::`.`
 
       # d[, end_col := get(end_col) + overlap_int]
@@ -203,25 +257,40 @@ data(overlap_dt)
       # we assign end_col <- start_col
 
       d[, dftm := difftime(as.Date(endcol), as.Date(strcol))]
-
       if (d[, any(dftm < 0)]) {
         f <- function(x) paste(x, collapse = " ")
-        p_v <- d[dftm > 0, paste0(apply(.SD, 1, f), collapse = ", "), .SDc = PK_v]
-        warning(fn(), "Primary key vectors, ", p_v, " have reversed dates. ")
-      }
+        p_v <- d[dftm < 0, paste0(apply(.SD, 1, f), collapse = ", "), .SDc = PK_v]
+        warning("Primary key vectors, ", p_v, " have reversed dates. ")
+        d[dftm < 0, endcol := strcol]
+      } ; d[, dftm := NULL]
 
-
-      d[endcol - strcol < 0, endcol := strcol]
-      as.Date(d$strcol)
-
-      d[, index := .I]
-      setnames(d, start_col, "start_date")
-      setnames(d, end_col, "end_date")
+      d[, idx := .I]
+      # setnames(d, start_col, "start_date")
+      # setnames(d, end_col, "end_date")
       # finding overlapping combinations via vectors of indices ---
+
+      d[pk1 == 11660]
+
+
+
       c_overlap <-
-        d[d[, unique(.SD), .SDcols =
-                                c(group_cols, "start_date", "end_col", "index")],
-                   on = group_cols, allow.cartesian = TRUE]
+        d[d[, unique(.SD),
+            .SDcols = c(group_cols, "start_date", "end_col", "index")],
+          on = group_cols, allow.cartesian = TRUE]
+
+
+      FL_v <- c("pk", SD_v)
+      foverlaps(
+        d[, .SD, .SDcols = FL_v],
+        d[, .SD, .SDcols = FL_v],
+        by.x = FL_v,
+        by.y = FL_v,
+        which = TRUE)
+
+
+      [xid != yid]
+
+
       c_overlap <- c_overlap[i.index != index]
       c_overlap[between(i.start_date, start_date, end_col) |
                   between(i.end_col, start_date, end_col),
