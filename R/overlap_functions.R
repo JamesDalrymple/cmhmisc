@@ -208,7 +208,8 @@ if (FALSE) {
       d[, uN := uniN(.SD), by = CS_v, .SDc = GS_v]
       # setorderv(d, c(CS_v, GS_v, SD_v))
       setkeyv(d, c(SD_v))
-      d[, fl_pk := foverlaps(.SD, .SD, type = "any",
+      d[, fl_pk := 1]
+      d[uN > 1, fl_pk := foverlaps(.SD, .SD, type = "any",
                              which = TRUE, mult = "first"),
         .SDc = c(SD_v), by = c(CS_v, GS_v)]
       setorderv(d, c(CS_v, "fl_pk", GS_v))
