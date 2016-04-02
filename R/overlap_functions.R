@@ -150,183 +150,85 @@ if (FALSE) {
   data("ex_overlap")
 
   # how to fix if priorities are not to be accounted for...
-  test1 <- overlap_combine(overlap_dt = overlap_dt,
-                           group_cols = c("case_no", "team"),
-                           start_col = "start_date",
-                           end_col = "end_date",
-                           overlap_int = 1L,
-                           replace_blanks = Sys.Date() + 1e3)
+
 
   if (F) {
     # copy(overlap_dt)
     data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
                               "data-sets/ex_admissions.rds"))
 
+    data[, Cs(other1, other2) := .(seq_row(data), rev(seq_row(data)))]
+    a <- proc.time()
+    test1 <- overlap_combine(data,
+                             group_cols =
+                          c("case_no", "cmh_team","cmh_effdt", "cmh_expdt"),
+                             start_col = "team_effdt",
+                             end_col = "team_expdt",
+                             overlap_int = 1L,
+                             replace_blanks = Sys.Date() + 1e3)
+    b <- proc.time() ; b-a
+    a <- proc.time()
+    test2 <- overlap_combine2(data,
+                              case_col = c("case_no"),
+                    group_cols = c("cmh_team","cmh_effdt", "cmh_expdt"),
+                    start_col = "team_effdt",
+                    end_col = "team_expdt",
+                    overlap_int = 1L,
+                    analysis_date = Sys.Date() + 1e3)
+    b <- proc.time() ; b-a
+    # test1$case,test2$case
+    # dm <- merge(test1, test2, by.x = Cs(case_no, group_cols), by.y = )
 
     # data <- fread(file.path(".", "data","ex_overlap.csv"))
     # data <- copy(data(ex_overlap))
     # data[, start_date := as.Date(.I)]
     case_col = c("case_no")
-    group_cols = c("cmh_team")
+    group_cols = c("cmh_team","cmh_effdt", "cmh_expdt")
     start_col = "team_effdt"
     end_col = "team_expdt"
     overlap_int = 1L
     analysis_date = Sys.Date() + 1e3
   }
 
-  overlap_combine <-
+  overlap_combine2 <-
     function(data, case_col, group_cols, start_col, end_col,
              overlap_int = 1L, analysis_date = Sys.Date()) {
-      d <- copy(data)[, .SD, .SDc = c(start_col, end_col, case_col, group_cols)]
-      GS_v <- paste0("grp", seq(group_cols))
-      SD_v <- Cs(strcol, endcol)
+      focus_flds  <- c(start_col, end_col, case_col, group_cols)
+      remand_flds <- setdiff(names(data), focus_flds)
+      d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
+      # GS_v <- paste0("grp", seq(group_cols))
+      GS_v <- group_cols
+      SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
       CS_v <- Cs(case)
-      setnames(d, c(SD_v, CS_v, GS_v))
-      set(d, j = SD_v,
-          value = lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
+      setnames(d, c(SD_v, CS_v, GS_v, remand_flds))
+      set(d, j = SD_v, value =
+            lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
       if (!inherits(analysis_date, what = "Date"))
         analysis_date <- as.Date(analysis_date)
-      # d[, pk := .GRP, by = CS_v]
       d[, uN := uniN(.SD), by = CS_v, .SDc = GS_v]
-      setorderv(d, c(CS_v, GS_v, SD_v))
-      # for (j in SD_v) set(d, j=j, value = as.integer(d[[j]]))
-
-      # d[ case == 11660]
-      # d[uN > 1 & case == 10008, .SD, by = CS_v]
-      # d[uN > 1 & case == 11660, .SD, by = CS_v]
-      #
-      # d[uN > 1 , .SD, by = CS_v]
-      d[case == 11660][order(case, grp1)]
-
+      # setorderv(d, c(CS_v, GS_v, SD_v))
       setkeyv(d, c(SD_v))
-      # foverlaps(copy(.SD), copy(.SD), type = "any", which = TRUE)
-      # d[case == 10008,
-      #   foverlaps(copy(.SD), copy(.SD), type = "any", which = TRUE),
-      #   .SDc = SD_v, by = CS_v]
-
-
-      over_idx <- d[case == 11660,
-        foverlaps(.SD, .SD, type = "any", which = TRUE),
-        .SDc = c(SD_v),
-        by = c(CS_v, GS_v)]
-
-      over_idx[, mids := rowMeans(.SD), .SDc = Cs(xid, yid)]
-      # setnames(over_idx, Cs(xid, yid), Cs(x_sgrp, y_sgrp))
-      over_idx
-
-      setorderv(over_idx, c(CS_v, GS_v, "mids"))
-
-      over_idx[, newgrp := mids - shift(mids, n = 1, type = "lag") >= 1, by = grp]
-      over_idx[is.na(newgrp), newgrp := TRUE]
-      over_idx[, host_stay := cumsum(newgrp)]
-
-      ON <- c(grp = 'grp', sgrp = 'x_sgrp')
-      state_hosp[over_idx, host_stay := host_stay, on = ON]
-      date_nvec <- Cs(hosp_start, hosp_expire)
-      for (j in date_nvec) {
-        set(state_hosp, j=j, value = as.Date(state_hosp[[j]], origin = "1970-01-01"))
-      }
-
-
-
-
-      # type case_no team start_date end_date priority end_col
-
-      # overlap_dt = modify$cmh_core[case_no == 10450]
-      # options(warn=2)
-      # overlap_dt = copy(modify$cmh_core[case_no == 11660])
-      # overlap_dt = copy(modify$cmh_core[case_no == 10563])
-      # overlap_dt = copy(modify$cmh_core[case_no == 11091])
-      # overlap_dt = copy(modify$cmh_core[case_no == 220766])
-      # setorderv(d, c(group_cols, start_col))
-      # if (any(names(d) == "end_col")) {
-      #   d[, end_col := NULL]
-      #   p_warn("You had a column labeled end_col which conflicts with
-      #  overlap_comb. It was deleted and re-created based on the end_col
-      #          parameter.")
-      # }
-
-      d[, Cs(strcol, endcol) := .(strcol + overlap_int, endcol + overlap_int)]
-      # plyr:::`.`
-
-      # d[, end_col := get(end_col) + overlap_int]
-      # sd_cols <- c(start_col, "end_col")
-      d[is.na(endcol), endcol := analysis_date] #CHECK use better name.
-
-      # note: if end_col becomes < start_col due to overlap_int,
-      # we assign end_col <- start_col
-
-      d[, dftm := difftime(as.Date(endcol), as.Date(strcol))]
-      if (d[, any(dftm < 0)]) {
-        f <- function(x) paste(x, collapse = " ")
-        p_v <- d[dftm < 0, paste0(apply(.SD, 1, f), collapse = ", "), .SDc = PK_v]
-        warning("Primary key vectors, ", p_v, " have reversed dates. ")
-        d[dftm < 0, endcol := strcol]
-      } ; d[, dftm := NULL]
-
-      d[, idx := .I]
-      # setnames(d, start_col, "start_date")
-      # setnames(d, end_col, "end_date")
-      # finding overlapping combinations via vectors of indices ---
-
-      d[pk1 == 11660]
-
-
-
-      c_overlap <-
-        d[d[, unique(.SD),
-            .SDcols = c(group_cols, "start_date", "end_col", "index")],
-          on = group_cols, allow.cartesian = TRUE]
-
-
-      FL_v <- c("pk", SD_v)
-      foverlaps(
-        d[, .SD, .SDcols = FL_v],
-        d[, .SD, .SDcols = FL_v],
-        by.x = FL_v,
-        by.y = FL_v,
-        which = TRUE)
-
-
-      [xid != yid]
-
-
-      c_overlap <- c_overlap[i.index != index]
-      c_overlap[between(i.start_date, start_date, end_col) |
-                  between(i.end_col, start_date, end_col),
-                ovr_vec := list(list(unique(c(index, i.index)))),
-                by = c(group_cols, "start_date")]
-
-      if (!is.null(c_overlap$ovr_vec)) {
-        ovr_l <- c_overlap[, ovr_vec]
-        ovr_l <- Filter(Negate(function(x) is.null(unlist(x))), ovr_l)
-        ovr_l <- unique(ovr_l)
-        # find list of reduced vectors which we need to MIN/MAX ---
-        ovr_red_l <- list()
-        for (i in seq_along(ovr_l)) {
-          tmp_inter <- unique(as.vector(unlist(sapply(
-            ovr_l,
-            FUN = function(x) {
-              if (length(intersect(unlist(x), unlist(ovr_l[i]))) > 0) {
-                result <- union(unlist(x), unlist(ovr_l[i]))
-                return(result)
-              } else {
-                return(ovr_l[i])
-              }
-            }
-          ))))
-          ovr_red_l[[i]] <- sort(tmp_inter)
-        }
-        ovr_red_l <- unique(ovr_red_l)
-
-        for (i in seq(ovr_red_l)) {
-          setkey(d, index)[ovr_red_l[[i]],
-                                    c("start_date", "end_date", "end_col") :=
-                                      list(min(start_date), max(end_date), max(end_col))]
-        }
-      }
-      d[, index := NULL]
-      d <- unique(d)
+      d[, fl_pk := foverlaps(.SD, .SD, type = "any",
+                             which = TRUE, mult = "first"),
+        .SDc = c(SD_v), by = c(CS_v, GS_v)]
+      setorderv(d, c(CS_v, "fl_pk", GS_v))
+      d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
+      spntf_mnchr_v <- d[,unlist(
+        .(case = max(nchar(case)),
+          ugrp = max(nchar(as.character(gs_i))),
+          ufol = max(nchar(fl_pk))))]
+      fmt <- paste0("%",
+                    spntf_mnchr_v['case'], ".0f-%",
+                    spntf_mnchr_v['ugrp'], ".0f-%",
+                    spntf_mnchr_v['ufol'], ".0f")
+      d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
+      d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
+      d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
+      dn_v <- names(d)
+      for(j in grepv('date', dn_v))
+        set(d, j=j, value = as.Date(d[[j]], origin = "1970-01-01"))
+      output_vec <- c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
+      d <- d[, unique(.SD), .SDc = output_vec]
       return(d)
     }
 
