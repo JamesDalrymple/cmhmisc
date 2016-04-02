@@ -164,12 +164,14 @@ data(overlap_dt)
   }
 
   overlap_combine <-
-    function(overlap_dt, group_cols, start_col,
-             end_col, overlap_int = 1L, replace_blanks = Sys.Date()) {
-      d <- copy(overlap_dt)[, .SD, .SDc = c(start_col, end_col, group_cols)]
+    function(data, group_cols, start_col, end_col,
+             overlap_int = 1L, analysis_date = Sys.Date()) {
+      if (!is.Date(analysis_date)) analysis_date <- as.Date(analysis_date)
+      d <- copy(data)[, .SD, .SDc = c(start_col, end_col, group_cols)]
       PK_v <- paste0("pk", seq(group_cols))
       SD_v <- Cs(strcol, endcol)
       setnames(d, c(SD_v, PK_v))
+      d[, pk := .GRP, by = PK_v]
 
       # type case_no team start_date end_date priority end_col
 
@@ -189,13 +191,12 @@ data(overlap_dt)
       #          parameter.")
       # }
 
-      d[,  Cs(strcol, endcol) := .(strcol + overlap_int,
-                                   endcol + overlap_int)]
+      d[,  Cs(strcol, endcol) := .(strcol + overlap_int, endcol + overlap_int)]
       # plyr:::`.`
 
       # d[, end_col := get(end_col) + overlap_int]
       # sd_cols <- c(start_col, "end_col")
-      d[is.na(endcol), endcol := replace_blanks] #CHECK use better name.
+      d[is.na(endcol), endcol := analysis_date] #CHECK use better name.
 
       # note: if end_col becomes < start_col due to overlap_int,
       # we assign end_col <- start_col
