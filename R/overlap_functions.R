@@ -153,9 +153,8 @@ data(overlap_dt)
 
   if (F) {
     # copy(overlap_dt)
-    overlap_dt <- data(ex_overlap)
-    data = copy(overlap_dt)
-    data[, start_date := as.Date(.I)]
+    data <- copy(data(ex_overlap))
+    # data[, start_date := as.Date(.I)]
     group_cols = c("case_no", "team")
     start_col = "start_date"
     end_col = "end_date"
