@@ -205,13 +205,16 @@ if (FALSE) {
             lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
       if (!inherits(analysis_date, what = "Date"))
         analysis_date <- as.Date(analysis_date)
-      d[, uN := uniN(.SD), by = CS_v, .SDc = GS_v]
+      d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
+      # d[uN > 1]
       # setorderv(d, c(CS_v, GS_v, SD_v))
       setkeyv(d, c(SD_v))
-      d[, fl_pk := 1]
+      # d[, fl_pk := 1]
       d[uN > 1, fl_pk := foverlaps(.SD, .SD, type = "any",
                              which = TRUE, mult = "first"),
         .SDc = c(SD_v), by = c(CS_v, GS_v)]
+      d[is.na(fl_pk), fl_pk := 1L]
+
       setorderv(d, c(CS_v, "fl_pk", GS_v))
       d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
       spntf_mnchr_v <- d[,unlist(
