@@ -196,8 +196,8 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
   d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
   GS_v <- group_cols
   SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
-  d[, end_overlap := get(end_col) + overlap_int]
-  SD_overlap_v <- c(srt_date_col = "strcol", end_date_col = "end_overlap")
+  # d[, end_overlap := get(end_col) + overlap_int]
+  # SD_v2 <- c(srt_date_col = "strcol", end_date_col = "end_overlap")
   CS_v <- Cs(case)
   setnames(d, c(SD_v, CS_v, GS_v, remand_flds, "end_overlap"))
   set(d, j = SD_v, value =
@@ -206,16 +206,15 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
     analysis_date <- as.Date(analysis_date)
   d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
   # finding all overlaps via foverlap (smartly! thanks @Reino) ---
-  #   d[case==1126484 & cmh_effdt == "2011-02-15"]
-  setkeyv(d, c(SD_overlap_v))
+  setkeyv(d, c(SD_v))
   d[uN > 1, fl_pk := foverlaps(.SD, .SD, type = "any",
                          which = TRUE, mult = "first"),
-    .SDc = c(SD_overlap_v), by = c(CS_v, GS_v)]
-  d[is.na(fl_pk), fl_pk := 1L] # afterward is easier/faster
+    .SDc = c(SD_v), by = c(CS_v, GS_v)]
+  d[is.na(fl_pk), fl_pk := 1L]
   d[, end_overlap := NULL]
   setorderv(d, c(CS_v, "fl_pk", GS_v))
   d[, pk := .GRP, by = c(CS_v, GS_v, "fl_pk")]
-  # gs_i below was makes pk change when it should not
+  # gs_i below makes pk change when it should not
   d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
         spntf_mnchr_v <- d[,unlist(
           .(case = max(nchar(case)),
