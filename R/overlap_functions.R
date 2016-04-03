@@ -137,13 +137,16 @@ overlap_combine <-
     }
 
 if (FALSE) { # testing fn's for disagreement anywhere
+  # testing data --------------------------------------------------------------
   # James
   data <- readRDS(file.path("B:/Dropbox/EToPac",
                             "data-sets/ex_admissions.rds"))
   # Reino
   data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
                             "data-sets/ex_admissions.rds"))
-  data[, Cs(other1, other2) := .(seq_row(data), rev(seq_row(data)))]
+  data[, Cs(other1) := .GRP, by = c("case_no")]
+  data[, Cs(other2) := 1e6-(other1), by = c("case_no")]
+
   # testing old ---
   a1 <- proc.time()
   test_old <-
@@ -259,6 +262,7 @@ overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
   # foverlaps mult = 'first' does not chain well
   # foverlaps mult = 'all' could potentially lead to the old way of doing things
 
+  # d[case==1126484 & cmh_effdt == "2011-02-15"]
 
   # finding all overlaps via foverlap (smartly! thanks @Reino) ---
   setkeyv(d, c(SD_overlap_v))
@@ -266,6 +270,11 @@ overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
                                which = TRUE, mult = "first"),
     .SDc = c(SD_overlap_v), by = c(CS_v, GS_v)]
   d[is.na(fl_pk), fl_pk := 1L]
+
+  # d[case==1126484 & cmh_effdt == "2011-02-15"]
+  # d[, fl_pk := NULL]
+
+
   d[, end_overlap := NULL]
   setorderv(d, c(CS_v, "fl_pk", GS_v))
   d[, pk := .GRP, by = c(CS_v, GS_v, "fl_pk")]
