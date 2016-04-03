@@ -188,7 +188,11 @@ start_col = "team_effdt"
 end_col = "team_expdt"
 overlap_int = 1L
 analysis_date = Sys.Date() + 1e3
-
+# Reino's new method ---------------------------------------------------------#
+# issue 1: records than chain overlap are not all merged (i.e. case=1126484)
+# issue 2: gs_i + seq() is making pk change when a change is not desired,
+#         which results is records that ought to be combined, not combining
+# issue 3: overlap_int is not utilized
 overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
   overlap_int = 1L, analysis_date = Sys.Date()) {
   focus_flds  <- c(start_col, end_col, case_col, group_cols)
@@ -196,8 +200,6 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
   d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
   GS_v <- group_cols
   SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
-  # d[, end_overlap := get(end_col) + overlap_int]
-  # SD_v2 <- c(srt_date_col = "strcol", end_date_col = "end_overlap")
   CS_v <- Cs(case)
   setnames(d, c(SD_v, CS_v, GS_v, remand_flds, "end_overlap"))
   set(d, j = SD_v, value =
@@ -214,7 +216,6 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
   d[, end_overlap := NULL]
   setorderv(d, c(CS_v, "fl_pk", GS_v))
   d[, pk := .GRP, by = c(CS_v, GS_v, "fl_pk")]
-  # gs_i below makes pk change when it should not
   d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
         spntf_mnchr_v <- d[,unlist(
           .(case = max(nchar(case)),
@@ -236,7 +237,62 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
   setnames(d, "ldate", end_col)
   setnames(d, "case", case_col)
   return(d)
-} # end of function
+} # end of Reino's function
+
+# James' poor attempt at a new method ----------------------------------------#
+overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
+                             overlap_int = 1L, analysis_date = Sys.Date()) {
+  focus_flds  <- c(start_col, end_col, case_col, group_cols)
+  remand_flds <- setdiff(names(data), focus_flds)
+  d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
+  GS_v <- group_cols
+  SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
+  d[, end_overlap := get(end_col) + overlap_int]
+  SD_overlap_v <- c(srt_date_col = "strcol", end_date_col = "end_overlap")
+  CS_v <- Cs(case)
+  setnames(d, c(SD_v, CS_v, GS_v, remand_flds, "end_overlap"))
+  set(d, j = SD_v, value =
+        lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
+  if (!inherits(analysis_date, what = "Date"))
+    analysis_date <- as.Date(analysis_date)
+  d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
+  # foverlaps mult = 'first' does not chain well
+  # foverlaps mult = 'all' could potentially lead to the old way of doing things
+
+
+  # finding all overlaps via foverlap (smartly! thanks @Reino) ---
+  setkeyv(d, c(SD_overlap_v))
+  d[uN > 1, fl_pk := foverlaps(.SD, .SD, type = "any",
+                               which = TRUE, mult = "first"),
+    .SDc = c(SD_overlap_v), by = c(CS_v, GS_v)]
+  d[is.na(fl_pk), fl_pk := 1L]
+  d[, end_overlap := NULL]
+  setorderv(d, c(CS_v, "fl_pk", GS_v))
+  d[, pk := .GRP, by = c(CS_v, GS_v, "fl_pk")]
+  # gs_i below makes pk change when it should not
+  # d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
+  d[, pk := .GRP, by = c(CS_v, GS_v, "fl_pk")]
+#   spntf_mnchr_v <- d[,unlist(
+#     .(case = max(nchar(case)),
+#       ugrp = max(nchar(as.character(gs_i))),
+#       ufol = max(nchar(fl_pk))))]
+#   fmt <- paste0("%",
+#                 spntf_mnchr_v['case'], ".0f-%",
+#                 spntf_mnchr_v['ugrp'], ".0f-%",
+#                 spntf_mnchr_v['ufol'], ".0f")
+#   d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
+  d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
+  d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
+  dn_v <- names(d)
+  for(j in grepv('date', dn_v))
+    set(d, j=j, value = as.Date(d[[j]], origin = "1970-01-01"))
+  output_vec <- c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
+  d <- d[, unique(.SD), .SDc = output_vec]
+  setnames(d, "fdate", start_col)
+  setnames(d, "ldate", end_col)
+  setnames(d, "case", case_col)
+  return(d)
+} # end of James's new function, which still has the overlaps issue
 
 } # end of if(FALSE)
 
