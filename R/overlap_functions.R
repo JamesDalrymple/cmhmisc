@@ -4,8 +4,8 @@
 #' additional constraint of a priority column when the priority column causes
 #' an overlap outside of the unique grouping but within the priority column.
 #'
-#' @param dt A data.table object with collapsable records.
-#' @param case_col the case_no or main field distiguisher.
+#' @param data A data.table object with collapsable records.
+# param case_col the case_no or main field distiguisher.
 #' @param group_cols A group of columns which will collectively make a key on
 #' which to group by when reducing/collapsing the data.table object.
 #' @param priority_col A single column which will have a priority assignment.
@@ -13,10 +13,9 @@
 #' higher priorities. May be numeric if coerceable to integer.
 #' @param start_col The start date for record. Blanks not allowed.
 #' @param end_col The end date for the record. Blanks will be replaced, see
-#' parameter user_rep_blanks
 #' @param overlap_int An integer, default value of 1, to find consecutive
 #' records.
-#' @param user_rep_blanks If end_col has missing values, they will be replaced
+#' @param analysis_date If end_col has missing values, they will be replaced
 #' with this value. Defaults to Sys.Date().
 #'
 #' @return overlap_combine returns a reduced/collapsed data.table object based
@@ -24,7 +23,7 @@
 #' priority_overlap returns a data.table with fixed records based on priority
 #' team assignment. May contain more rows than original dataset.
 #'
-#' @note Do not have dt columns named strdt, enddt, pk_1, pk_2, ... You have
+#' @note Do not have data columns named strdt, enddt, pk_1, pk_2, ... You have
 #' been warned!
 #'
 #' @examples
@@ -43,17 +42,17 @@
 #' # how to fix if priorities are not to be accounted for...
 #' test1 <- overlap_combine(overlap_dt = ex_overlap, group_cols = c("case_no",
 #' "team"), start_col = "start_date", end_col = "end_date",
-#'  overlap_int = 1L, user_rep_blanks = Sys.Date() + 1e3)
+#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
 #'
 #'  # how to fix if priorities are to be accounted for...
-#' test2 <- priority_overlap(overlap_dt = copy(ex_overlap),
+#' test2 <- priority_overlap(data = copy(ex_overlap),
 #'                  group_cols = "person_ID",
 #'                  priority_col = "team",
 #'                  priority_value = "priority",
 #'                  start_col = "start_date",
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
-#'                  user_rep_blanks = Sys.Date())
+#'                  analysis_date = Sys.Date())
 #' }
 #' @import data.table
 #' @importFrom Hmisc Cs
@@ -243,9 +242,9 @@ overlap_combine2 <- function(data, case_col, group_cols, start_col, end_col,
 } # end of Reino's function
 
 # James' poor attempt at a new method ----------------------------------------#
-overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
+overlap_combine3 <- function(data, group_cols, start_col, end_col,
                              overlap_int = 1L, analysis_date = Sys.Date()) {
-  focus_flds  <- c(start_col, end_col, case_col, group_cols)
+  focus_flds  <- c(start_col, end_col, group_cols)
   remand_flds <- setdiff(names(data), focus_flds)
   d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
   GS_v <- group_cols
@@ -299,7 +298,6 @@ overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
   d <- d[, unique(.SD), .SDc = output_vec]
   setnames(d, "fdate", start_col)
   setnames(d, "ldate", end_col)
-  setnames(d, "case", case_col)
   return(d)
 } # end of James's new function, which still has the overlaps issue
 
@@ -309,14 +307,13 @@ overlap_combine3 <- function(data, case_col, group_cols, start_col, end_col,
 #' @export
 #' @rdname overlap_functions
 priority_overlap <- function(data,
-                             case_col,
                              group_cols,
                              priority_col,
                              priority_value,
                              start_col,
                              end_col,
                              overlap_int = 1L,
-                             replace_blanks = Sys.Date()+999) {
+                             analysis_date = Sys.Date()+999) {
   # data = copy(data)
   # group_cols = Cs(case_no, cmh_effdt)
   # priority_col = "cmh_team"
@@ -325,26 +322,25 @@ priority_overlap <- function(data,
   # end_col = "team_expdt"
 
   # fix 'easier' issues first with simple min/max
-  overlap_dt <- overlap_combine(
+  d <- overlap_combine(
     data = data,
-    case_col = case_col,
     group_cols = c(group_cols, priority_col),
     start_col = start_col,
     end_col = end_col,
     overlap_int = overlap_int,
-    replace_blanks = replace_blanks
+    analysis_date = analysis_date
   )
-  group_cols <- c(case_col, setdiff(group_cols, priority_col))
-  setnames(overlap_dt, priority_col, "p_col")
-  setnames(overlap_dt, priority_value, "p_integer")
-  overlap_dt[, p_integer := as.int(p_integer)]
-  stopifnot(overlap_dt[, class(p_integer)] == "integer")
-  overlap_dt[!is.na(end_date), end_col := end_date]
-  setkeyv(overlap_dt, c(group_cols, "start_date", "end_col"))
+  group_cols <- setdiff(group_cols, priority_col)
+  setnames(d, priority_col, "p_col")
+  setnames(d, priority_value, "p_integer")
+  d[, p_integer := as.int(p_integer)]
+  stopifnot(d[, class(p_integer)] == "integer")
+  d[!is.na(end_date), end_col := end_date]
+  setkeyv(d, c(group_cols, "start_date", "end_col"))
   overlap_pairs_dt <-
     foverlaps(
-      overlap_dt[, .SD, .SDcols = c(group_cols, Cs(start_date, end_col))],
-      overlap_dt[, .SD, .SDcols = c(group_cols, Cs(start_date, end_col))],
+      d[, .SD, .SDcols = c(group_cols, Cs(start_date, end_col))],
+      d[, .SD, .SDcols = c(group_cols, Cs(start_date, end_col))],
       by.x = c(group_cols, "start_date", "end_col"),
       by.y = c(group_cols, "start_date", "end_col"),
       which = TRUE)[xid != yid]
@@ -374,12 +370,12 @@ priority_overlap <- function(data,
       break
   } # end of while
 
-  overlap_dt[, index := .I]
-  messy_ovr_dt <- setkey(overlap_dt, index)[unlist(ovr_pairs_l)]
-  clean_dt <- setkey(overlap_dt, index)[!unlist(ovr_pairs_l)]
-  retain_cols <- setdiff(names(overlap_dt),
+  d[, index := .I]
+  messy_ovr_dt <- setkey(d, index)[unlist(ovr_pairs_l)]
+  clean_dt <- setkey(d, index)[!unlist(ovr_pairs_l)]
+  retain_cols <- setdiff(names(d),
     c("start_date", "end_date", "date_value", "end_col"))
-  messy_ovr_dt[is.na(end_date), end_date := replace_blanks]
+  messy_ovr_dt[is.na(end_date), end_date := analysis_date]
   # self join by overlap (too bad we cant add conditions here) ---
   # messy_ovr_dt[cmh_priority_dt, priority := i.priority, on = "team"]
   setkeyv(messy_ovr_dt, c(group_cols, "start_date", "end_date"))
