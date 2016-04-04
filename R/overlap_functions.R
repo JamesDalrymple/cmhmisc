@@ -27,33 +27,23 @@
 #' been warned!
 #'
 #' @examples
-#' \dontrun{
-#' # ex_overlap <-
-#'  fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-#' # ex_overlap[, start_date := as.Date(start_date, format = '%m/%d/%Y')]
-#' # ex_overlap[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
-#' # ex_overlap[, priority := as.integer(priority)]
-#' # save(ex_overlap,
-#' #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
-#' # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
-#'
 #' data(ex_overlap)
 #'
 #' # how to fix if priorities are not to be accounted for...
-#' test1 <- overlap_combine(overlap_dt = ex_overlap, group_cols = c("case_no",
+#' test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
 #' "team"), start_col = "start_date", end_col = "end_date",
 #'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
 #'
 #'  # how to fix if priorities are to be accounted for...
 #' test2 <- priority_overlap(data = copy(ex_overlap),
-#'                  group_cols = "person_ID",
+#'                  group_cols = c("case_no", "type"),
 #'                  priority_col = "team",
 #'                  priority_value = "priority",
 #'                  start_col = "start_date",
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
 #'                  analysis_date = Sys.Date())
-#' }
+#'
 #' @import data.table
 #' @importFrom Hmisc Cs
 #' @importFrom EquaPac p_warn
@@ -69,12 +59,23 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
 
 # trouble_cases <- c(10450, 11660, 10563, 11091, 220766)
 
+
+if (FALSE) {
+  data = data
+  group_cols = c(group_cols, priority_col)
+  start_col = start_col
+  end_col = end_col
+  overlap_int = overlap_int
+  analysis_date = analysis_date
+}
+
+
 # older version (outdated 4/2/2016) -------------------------------------------
 #' @export
 #' @rdname overlap_functions
 overlap_combine <-
   function(data, group_cols, start_col, end_col, overlap_int = 1L,
-           analysis_date. = Sys.Date()) {
+           analysis_date = Sys.Date()) {
     d <- copy(data)
     if (any(names(d) == "end_col")) {
       d[, end_col := NULL]
@@ -84,10 +85,14 @@ overlap_combine <-
     }
     d[, end_col := get(end_col) + overlap_int]
     sd_cols <- c(start_col, "end_col")
-    d[is.na(end_col), end_col := analysis_date.]
+    d[is.na(end_col), end_col := analysis_date]
     # note: if end_col becomes < start_col due to overlap_int,
     # we assign end_col <- start_col
-    d[end_col - get(start_col) < 0, end_col := start_col]
+    if (nrow(d[end_col - get(start_col) < 0]) > 0) {
+      d[end_col - get(start_col) < 0, c(end_col, get(end_col))
+        := get(start_col)]
+      p_warn("you had start_col and end_col out of order")
+    }
     d[, index := .I]
     setnames(d, start_col, "start_date")
     setnames(d, end_col, "end_date")
@@ -130,7 +135,7 @@ overlap_combine <-
                            list(min(start_date), max(end_date), max(end_col))]
       }
     }
-    d[, index := NULL]
+    d[, Cs(index) := NULL]
     d <- unique(d)
     return(d)
     }
@@ -152,7 +157,7 @@ if (FALSE) { # testing fn's for disagreement anywhere
     overlap_combine(data,
       group_cols = Cs(case_no, cmh_effdt, cmh_expdt, cmh_team),
       start_col = Cs(team_effdt), end_col = Cs(team_expdt), overlap_int = 1L,
-      analysis_date. = Sys.Date())
+      analysis_date = Sys.Date())
   test_old
   a2 <- proc.time(); a2-a1
   # testing new ---
@@ -369,7 +374,6 @@ priority_overlap <- function(data,
     if (post_length - initial_length == 0)
       break
   } # end of while
-
   d[, index := .I]
   messy_ovr_dt <- setkey(d, index)[unlist(ovr_pairs_l)]
   clean_dt <- setkey(d, index)[!unlist(ovr_pairs_l)]
@@ -394,7 +398,6 @@ priority_overlap <- function(data,
   messy_ovr_dt[grp_n > 1 & index == i.index, remove_record := TRUE]
   messy_ovr_dt[, Cs(grp_id, grp_n) := NULL]
   messy_ovr_dt <- messy_ovr_dt[remove_record == FALSE | is.na(remove_record)]
-
   messy_ovr_dt[, add_record := NA_character_]
   # higher priority does not affect lower priority
   messy_ovr_dt[p_integer < i.p_integer, add_record := "do not change"]
@@ -443,40 +446,38 @@ priority_overlap <- function(data,
   split_recs <- messy_ovr_dt[add_record == "split record both sides"]
   split_recs[, index := -index]
   messy_ovr_dt <- messy_ovr_dt[add_record %nin% "split record both sides"]
-  messy_ovr_dt <- rbindlist(list(messy_ovr_dt,
-                 copy(split_recs[, add_record := "shorten left side"]),
-                 copy(split_recs[, add_record := "shorten right side"])
-  ))
+  # dealing with each split separately is the safe/right way to do this
+  split_right <- copy(split_recs)[, `:=`(add_record = "split right")]
+  split_right[, end_date := i.start_date - 1]
+  split_right[, end_date := min(end_date), by = index]
+  split_left <- copy(split_recs)[, `:=`(add_record = "split left")]
+  split_left[, start_date := i.end_date + 1]
+  split_left[, start_date := max(start_date), by = index]
+  split_comb <- rbindlist(list(split_right, split_left), use.names = TRUE)
+  split_comb[, c(grep(x = names(split_comb), pattern = "[.]", value = TRUE),
+    Cs(new_index, remove_record, add_record, index)) := NULL]
+  # applying date fixes
   messy_ovr_dt[add_record == "shorten left side",
     start_date := i.end_date + 1]
   messy_ovr_dt[add_record == "shorten right side",
                end_date := i.start_date - 1]
   # records were separated via foverlaps; rejoining now ---
-
-  messy_ovr_dt[index > 0, # avoiding combing split records
+  messy_ovr_dt[,
                Cs(start_date, end_date) :=
                list(max(start_date),
                     min(end_date)),
                by = c(group_cols, "p_col", "index")]
-  # AS IS, FLAWED! James 3/31/2016 6:03 PM ---
-  # messy_ovr_dt[like(add_record, "shorten left side"),
-  #             start_date := max(start_date), by = c(group_cols, "p_col")]
-  #messy_ovr_dt[like(add_record, "shorten right side"),
-  #             end_date := min(end_date), by = c(group_cols, "p_col")]
-  messy2 <- messy_ovr_dt[, unique(.SD),
-    .SDcols = c(group_cols, Cs(p_col, start_date,
-    end_date, p_integer, end_col, index, add_record))]
-  setorderv(messy2, c(group_cols, "start_date", "end_date"))
-  messy2[, add_record := NULL]
-  fixed_dt <- rbindlist(list(clean_dt, messy2), use.names = TRUE)
-  fixed_dt[, Cs(end_col, index) := NULL]
+
+  messy_ovr_dt[, setdiff(names(messy_ovr_dt), names(split_comb)) := NULL]
+  messy_ovr_dt <- unique(messy_ovr_dt)
+  split_comb <- unique(split_comb)
+  clean_dt[, setdiff(names(clean_dt), names(split_comb)) := NULL]
+  fixed_dt <- rbindlist(list(messy_ovr_dt, split_comb, clean_dt), use.names = TRUE)
+  fixed_dt[, end_col := NULL]
   setnames(fixed_dt, "p_col", priority_col)
   setnames(fixed_dt, "p_integer", priority_value)
-  setkeyv(fixed_dt, c(group_cols, "start_date", "end_date"))
   setnames(fixed_dt, "start_date", start_col)
   setnames(fixed_dt, "end_date", end_col)
-  setkey(fixed_dt, NULL)
-  fixed_dt <- unique(fixed_dt)
   return(fixed_dt)
 }
 

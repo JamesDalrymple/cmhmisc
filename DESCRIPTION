@@ -13,7 +13,6 @@ Depends:
     Hmisc,
     zoo,
 Imports:
-    data.table (>= 1.9.6),
     english
 License: MIT + file LICENSE
 LazyData: true
