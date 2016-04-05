@@ -73,7 +73,9 @@ cmh_recode <- function(x, missing_key = "non-CMH") {
   if (any(is.na(x))) x[is.na(x)] <- missing_key
   recode_key <- cmh_team_key
   unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
-  recode_key$unknown <- unknown
+  if (length(unknown) > 0) {
+    recode_key$unknown <- unknown
+  }
   recode_string(x = x, recode_key = recode_key)
 }
 
