@@ -156,8 +156,9 @@ if (FALSE) {
     # copy(overlap_dt)
     data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
                               "data-sets/ex_admissions.rds"))
-
     data[, Cs(other1, other2) := .(seq_row(data), rev(seq_row(data)))]
+
+
     a <- proc.time()
     test1 <- overlap_combine(data,
                              group_cols =
@@ -176,6 +177,45 @@ if (FALSE) {
                     overlap_int = 1L,
                     analysis_date = Sys.Date() + 1e3)
     b <- proc.time() ; b-a
+    library(data.table)
+    library(EquaPac)
+    # sourceCpp("overlap.cpp")
+    options(showWarnCalls = TRUE,
+            max.print = 10000,
+            # scipen = 0,
+            # warn = 1,
+            warn = 1, # Turns warnings to errors
+            stringsAsFactors = FALSE,
+            error = NULL,
+            # error = recover,
+            # error = browser,
+            # browserNLdisabled = TRUE, # Enter: repeats the previous command.
+            # warn = 2, # Turns warnings to errors
+            # show.error.locations = TRUE,
+            show.error.locations = 'top',
+            showErrorCalls = TRUE
+    )
+
+    # xid = c(1L, 1L, 2L, 2L, 2L, 3L, 3L)
+    # yid = c(1L, 2L, 1L, 2L, 3L, 2L, 3L)
+    #
+    # overlap_groups(xid, yid)
+
+    # z <- d.t(xid = x[seq(x)%%2==1], yid = x[seq(x)%%2==0], key = "xid")
+    # zet <- stunq(unlist(z))
+    # z[xid > yid, `:=`(yid = xid, xid = yid)]
+    # zm <- z[!duplicated(z) & xid != yid][order(xid, yid)]
+    # zm
+    # fs <- function(SD) t(apply(SD, 1, sort))
+    # z[xid == 1 | yid == 1,  t(apply(fs(.SD), 2, list))]
+    # lapply(xxx, 2, list)
+    # as.list(xxx)
+    # xdc <- dcast(melt(x, id.vars = Cs(xid, yid)), yid ~ xid)
+    # merge(xdc, xdc, by = Cs(yid))
+    # x[, yid, by = xid]
+    # sourceCpp(file = "fasterLm.cpp")
+    # library(Rcpp)
+
     # test1$case,test2$case
     # dm <- merge(test1, test2, by.x = Cs(case_no, group_cols), by.y = )
 
@@ -206,13 +246,42 @@ if (FALSE) {
       if (!inherits(analysis_date, what = "Date"))
         analysis_date <- as.Date(analysis_date)
       d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
-      # d[uN > 1]
+      # d[uN > 3]
       # setorderv(d, c(CS_v, GS_v, SD_v))
       setkeyv(d, c(SD_v))
       # d[, fl_pk := 1]
-      d[uN > 1, fl_pk := foverlaps(.SD, .SD, type = "any",
-                             which = TRUE, mult = "first"),
-        .SDc = c(SD_v), by = c(CS_v, GS_v)]
+      # d[case==1126484]
+      # Rcpp::sourceCpp("./src/overlap.cpp")
+      # d[case==244779]
+      # casenum <- 10499
+      # casenum <- 244779
+      # casenum <- 1126484
+
+      folp <- function(SD1, SD2, type = "any", which = TRUE, mult = "all") {
+        flopz <<- foverlaps(SD1, SD2, type = type, which = which, mult = mult)
+        z <- copy(flopz)
+        zset <- d.t(xid = stunq(z$xid), key = "xid")
+        z[xid > yid, `:=`(yid = xid, xid = yid)]
+        z <- z[!duplicated(z)][order(xid, yid)] # & xid != yid
+        if (z[, !any(xid != yid)] & nrow(z) == nrow(zset)) {
+          return(z[, .(as.integer(yid))])
+        } else if (z[, any(xid != yid)]) {
+          recode <- car::recode
+          rct <- copy(z[xid != yid])
+          for (i in rev(seq_row(rct))) { # i=4 i=3 i=2 i=1
+            rcs <- paste0(rct[i, yid], "=", rct[i, xid])
+            z[, Cs(xid, yid) := lapply(.SD, recode, rcs)]
+          }
+          setkey(z, xid)
+          return(z[zset, uni(.SD), roll = TRUE][,.(as.integer(yid))])
+        }
+        stop("The flop function has no idea how to handle a condition.")
+      }
+#       d[uN > 1 & case == casenum]
+#        #& cmh_team == "Child"
+#       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
+      d[, fl_pk := NA_integer_]
+      d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
       d[is.na(fl_pk), fl_pk := 1L]
 
       setorderv(d, c(CS_v, "fl_pk", GS_v))
