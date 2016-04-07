@@ -6,33 +6,32 @@
 \alias{priority_overlap}
 \title{WCCMH admission functions}
 \usage{
-overlap_combine(overlap_dt, group_cols, start_col, end_col, overlap_int = 1L,
-  replace_blanks = Sys.Date())
+overlap_combine(data, group_cols, start_col, end_col, overlap_int = 1L,
+  analysis_date = Sys.Date())
 
-priority_overlap(overlap_dt, group_cols, priority_col, priority_value,
-  start_col, end_col, overlap_int = 1L, replace_blanks = Sys.Date() + 999)
+priority_overlap(data, group_cols, priority_col, priority_value, start_col,
+  end_col, overlap_int = 1L, analysis_date = Sys.Date() + 999)
 }
 \arguments{
+\item{data}{A data.table object with collapsable records.}
+
 \item{group_cols}{A group of columns which will collectively make a key on
 which to group by when reducing/collapsing the data.table object.}
 
 \item{start_col}{The start date for record. Blanks not allowed.}
 
-\item{end_col}{The end date for the record. Blanks will be replaced, see
-parameter user_rep_blanks}
+\item{end_col}{The end date for the record. Blanks will be replaced, see}
 
 \item{overlap_int}{An integer, default value of 1, to find consecutive
 records.}
+
+\item{analysis_date}{If end_col has missing values, they will be replaced
+with this value. Defaults to Sys.Date().}
 
 \item{priority_col}{A single column which will have a priority assignment.}
 
 \item{priority_value}{An integer column, where lower priorities override
 higher priorities. May be numeric if coerceable to integer.}
-
-\item{dt}{A data.table object with collapsable records.}
-
-\item{user_rep_blanks}{If end_col has missing values, they will be replaced
-with this value. Defaults to Sys.Date().}
 }
 \value{
 overlap_combine returns a reduced/collapsed data.table object based
@@ -47,36 +46,26 @@ additional constraint of a priority column when the priority column causes
 an overlap outside of the unique grouping but within the priority column.
 }
 \note{
-Do not have dt columns named strdt, enddt, pk_1, pk_2, ... You have
+Do not have data columns named strdt, enddt, pk_1, pk_2, ... You have
 been warned!
 }
 \examples{
-\dontrun{
-# ex_overlap <-
- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-# ex_overlap[, start_date := as.Date(start_date, format = '\%m/\%d/\%Y')]
-# ex_overlap[, end_date := as.Date(end_date, format = "\%m/\%d/\%Y")]
-# ex_overlap[, priority := as.integer(priority)]
-# save(ex_overlap,
-#  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
-# load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/ex_overlap.rda")
-
 data(ex_overlap)
 
 # how to fix if priorities are not to be accounted for...
-test1 <- overlap_combine(overlap_dt = ex_overlap, group_cols = c("case_no",
+test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
 "team"), start_col = "start_date", end_col = "end_date",
- overlap_int = 1L, user_rep_blanks = Sys.Date() + 1e3)
+ overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
 
  # how to fix if priorities are to be accounted for...
-test2 <- priority_overlap(overlap_dt = copy(ex_overlap),
-                 group_cols = "person_ID",
+test2 <- priority_overlap(data = copy(ex_overlap),
+                 group_cols = c("case_no", "type"),
                  priority_col = "team",
                  priority_value = "priority",
                  start_col = "start_date",
                  end_col = "end_date",
                  overlap_int = 1L,
-                 user_rep_blanks = Sys.Date())
-}
+                 analysis_date = Sys.Date())
+
 }
 

@@ -10,17 +10,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' data(overlap_dt)
-#' rm("overlap_dt")
-#' overlap_dt
-#' # wccmh::overlap_dt
+#' data(ex_overlap)
+#' rm("ex_overlap")
+#' ex_overlap
+#' # wccmh::ex_overlap
 #' }
-#' @name overlap_data
+#' @name ex_overlap
 NULL
-#' @rdname overlap_data
-"overlap_dt"
-
-# fb_unit_type <-
-#   readRDS("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/fb_unit_type.rdata")
-# fb_unit_type[mod=="", mod := NA]
-# save(fb_unit_type, file = "fb_unit_type.rda")
+#' @rdname ex_overlap
+"ex_overlap"

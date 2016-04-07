@@ -256,7 +256,7 @@ if (FALSE) {
       # casenum <- 10499
       # casenum <- 244779
       # casenum <- 1126484
-
+      d[, fl_pk := NA_integer_]
       folp <- function(SD1, SD2, type = "any", which = TRUE, mult = "all") {
         flopz <<- foverlaps(SD1, SD2, type = type, which = which, mult = mult)
         z <- copy(flopz)
@@ -276,11 +276,13 @@ if (FALSE) {
           return(z[zset, uni(.SD), roll = TRUE][,.(as.integer(yid))])
         }
         stop("The flop function has no idea how to handle a condition.")
+
       }
+
 #       d[uN > 1 & case == casenum]
 #        #& cmh_team == "Child"
 #       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
-      d[, fl_pk := NA_integer_]
+
       d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
       d[is.na(fl_pk), fl_pk := 1L]
 
