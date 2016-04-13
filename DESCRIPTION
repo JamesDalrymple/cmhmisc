@@ -13,7 +13,8 @@ Depends:
     Hmisc,
     zoo,
 Imports:
-    english
+    english,
+    intervals
 License: MIT + file LICENSE
 LazyData: true
 ByteCompile: TRUE
