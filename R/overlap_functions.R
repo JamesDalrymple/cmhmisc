@@ -34,8 +34,13 @@
 #' "team"), start_col = "start_date", end_col = "end_date",
 #'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
 #'
+#' test2 <- overlap_combine2(data = copy(ex_overlap), case_col = "case_no",
+#' group_cols = c("team"), start_col = "start_date", end_col = "end_date",
+#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
+#'
+#'
 #'  # how to fix if priorities are to be accounted for...
-#' test2 <- priority_overlap(data = copy(ex_overlap),
+#' test3 <- priority_overlap(data = copy(ex_overlap),
 #'                  group_cols = c("case_no", "type"),
 #'                  priority_col = "team",
 #'                  priority_value = "priority",
@@ -167,8 +172,8 @@ if (FALSE) {
                              start_col = "team_effdt",
                              end_col = "team_expdt",
                              overlap_int = 1L,
-                             replace_blanks = Sys.Date() + 1e3)
-    b <- proc.time() ; b-a
+                             analysis_date = Sys.Date() + 1e3)
+    b <- proc.time() ; b - a
     a <- proc.time()
     test2 <- overlap_combine2(data,
                               case_col = c("case_no"),
@@ -177,7 +182,7 @@ if (FALSE) {
                     end_col = "team_expdt",
                     overlap_int = 1L,
                     analysis_date = Sys.Date() + 1e3)
-    b <- proc.time() ; b-a
+    b <- proc.time() ; b - a
     library(data.table)
     library(EquaPac)
     # sourceCpp("overlap.cpp")
@@ -229,6 +234,16 @@ if (FALSE) {
     end_col = "team_expdt"
     overlap_int = 1L
     analysis_date = Sys.Date() + 1e3
+    # ex_overlap - package data example
+    data = copy(ex_overlap)
+    case_col = "case_no"
+    group_cols = c("team")
+    start_col = "start_date"
+    end_col = "end_date"
+    overlap_int = 1L
+    analysis_date = Sys.Date() + 999
+
+
   }
 
   overlap_combine2 <-
