@@ -50,12 +50,12 @@ Do not have data columns named strdt, enddt, pk_1, pk_2, ... You have
 been warned!
 }
 \examples{
-data(ex_overlap)
-
+#'
 # how to fix if priorities are not to be accounted for...
 test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
 "team"), start_col = "start_date", end_col = "end_date",
- overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
+ overlap_int = 1L, analysis_date = Sys.Date() + 1e3)#'
+print(test1)
 
  # how to fix if priorities are to be accounted for...
 test2 <- priority_overlap(data = copy(ex_overlap),
@@ -66,6 +66,7 @@ test2 <- priority_overlap(data = copy(ex_overlap),
                  end_col = "end_date",
                  overlap_int = 1L,
                  analysis_date = Sys.Date())
+print(test2)
 
 }
 

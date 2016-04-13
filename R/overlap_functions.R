@@ -26,21 +26,15 @@
 #' @note Do not have data columns named strdt, enddt, pk_1, pk_2, ... You have
 #' been warned!
 #'
-#' @examples
-#' data(ex_overlap)
-#'
+#' @examples#'
 #' # how to fix if priorities are not to be accounted for...
 #' test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
 #' "team"), start_col = "start_date", end_col = "end_date",
-#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
-#'
-#' test2 <- overlap_combine2(data = copy(ex_overlap), case_col = "case_no",
-#' group_cols = c("team"), start_col = "start_date", end_col = "end_date",
-#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
-#'
+#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)#'
+#' print(test1)
 #'
 #'  # how to fix if priorities are to be accounted for...
-#' test3 <- priority_overlap(data = copy(ex_overlap),
+#' test2 <- priority_overlap(data = copy(ex_overlap),
 #'                  group_cols = c("case_no", "type"),
 #'                  priority_col = "team",
 #'                  priority_value = "priority",
@@ -48,6 +42,7 @@
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
 #'                  analysis_date = Sys.Date())
+#' print(test2)
 #'
 #' @import data.table
 #' @importFrom Hmisc Cs
@@ -65,14 +60,14 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
 # trouble_cases <- c(10450, 11660, 10563, 11091, 220766)
 
 
-if (FALSE) {
-  data = copy(ex_overlap)
-  group_cols = c(group_cols, priority_col)
-  start_col = start_col
-  end_col = end_col
-  overlap_int = overlap_int
-  analysis_date = analysis_date
-}
+# WIP <- if (FALSE) {
+#   data = copy(ex_overlap)
+#   group_cols = c(group_cols, priority_col)
+#   start_col = start_col
+#   end_col = end_col
+#   overlap_int = overlap_int
+#   analysis_date = analysis_date
+# }
 
 
 # older version (outdated 4/2/2016) -------------------------------------------
@@ -153,12 +148,12 @@ if (FALSE) {
   # save(overlap_dt,
   #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
   # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-  data("ex_overlap")
+  # data("ex_overlap")
 
   # how to fix if priorities are not to be accounted for...
 
 
-  if (F) {
+WIP <- if (FALSE) {
     # copy(overlap_dt)
     data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
                               "data-sets/ex_admissions.rds"))
