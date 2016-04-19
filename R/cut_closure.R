@@ -55,10 +55,11 @@
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
 #'             ordered_result = FALSE, label_vec = NULL,)
 #' d <- data.table(
-#'   chol = sample(150:400, size = 1e3, replacement = TRUE))
+#'   chol = sample(150:400, size = 1e3, replace = TRUE))
+#' # breaks  <-  c(i = 0, ie = 200, ie = 240, e = Inf)
 #' breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 #' d[, cat := closure_cut(chol, breaks)]
-#' d
+#' # x <- d[, chol]
 #'
 #' # gaps will generate NA values, consistent with cut
 #' closure_cut(1, breaks = c(10, 20)) # base::cut applied
@@ -212,20 +213,22 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
     .bincode(precision_int,
              breaks = round(precision_int, dig.dec(epsilon)["round"]-1),
              include.lowest = inc_low)
-  bin_segments
+  # matching segments up to x_binned categories
+  bin_segments <- stunq(bin_segments)
+  bin_order_segments <- match(bin_segments, bin_segments)
 
   # heart of this function
   x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
-  # matching segments up to x_binned categories
-  bin_segments <- order(unique(bin_segments))
+  # matching segments up to bin_segments categories
+  x_binned <- match(x_binned, stunq(x_binned))
   # factor with label_vec as labels
   if (!is.null(label_vec)) {
     x_binned <-
-      factor(x_binned, levels = bin_segments,
+      factor(x_binned, levels = bin_order_segments,
              labels = label_vec, ordered = ordered_result)
   } else {
     # factor with interval levels as labels
-    x_binned <- factor(x_binned, levels = unique(bin_segments),
+    x_binned <- factor(x_binned, levels = bin_order_segments,
                        ordered = ordered_result, labels = interval_label)
   }
   return(x_binned)

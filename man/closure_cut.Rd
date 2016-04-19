@@ -71,10 +71,11 @@ closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
             ordered_result = FALSE, label_vec = NULL,)
 d <- data.table(
-  chol = sample(150:400, size = 1e3, replacement = TRUE))
+  chol = sample(150:400, size = 1e3, replace = TRUE))
+# breaks  <-  c(i = 0, ie = 200, ie = 240, e = Inf)
 breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 d[, cat := closure_cut(chol, breaks)]
-d
+# x <- d[, chol]
 
 # gaps will generate NA values, consistent with cut
 closure_cut(1, breaks = c(10, 20)) # base::cut applied
