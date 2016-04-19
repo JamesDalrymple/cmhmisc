@@ -205,17 +205,20 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
   precision_int[add_eps] <- precision_int[add_eps] + epsilon
   precision_int[sub_eps] <- precision_int[sub_eps] - epsilon
   precision_int <- stunq(unlist(precision_int, use.names = FALSE))
-  precision_int[is.infinite(precision_int)] <- 9999 # 1e+308
+  precision_int[is.infinite(precision_int)] <- 1e+308
   inc_low = b_names[1] == "i"
   bin_segments <-
     .bincode(precision_int,
-             breaks = round(precision_int, dig.dec(epsilon)["round"]-1), include.lowest = inc_low)
+             breaks = round(precision_int, dig.dec(epsilon)["round"]-1),
+             include.lowest = inc_low)
+  # heart of this function
   x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
-
+  # matching segments up to x_binned categories
+  bin_segments <- order(unique(bin_segments))
   # factor with label_vec as labels
   if (!is.null(label_vec)) {
     x_binned <-
-      factor(x_binned, levels = unique(bin_segments),
+      factor(x_binned, levels = bin_segments,
              labels = label_vec, ordered = ordered_result)
   } else {
     # factor with interval levels as labels
