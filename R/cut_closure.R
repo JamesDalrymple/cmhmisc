@@ -3,7 +3,8 @@
 #' @description interval categorization capable of handling each interval's
 #' boundary closures independently. This is designed to be used when base::cut
 #' does not fully meet your needs, and is a wrapper for cut when breaks are
-#' not named (see breaks).
+#' not named (see breaks). Unlike cut, gaps are permissible in consecutive
+#' intervals, but will generate NAs.
 #'
 #' @param x A numeric or integer vector to be categorized. Factors are
 #' coerced to integers.
@@ -14,7 +15,7 @@
 #' to base::cut. Breaks that leave gaps will result in NA values. If you name
 #' breaks with 'i' and 'e', do so consistently or you will be redirected to
 #' base::cut with a warning.
-#' @param labels The labels for the breaks. Order and length of labels must be
+#' @param label_vec The labels for the breaks. Order and length of labels must be
 #' consistent with breaks. Default null causes labels to be based on break
 #' intervals.
 #' @param dig_lab the desired number of digits after the decimal point
@@ -27,21 +28,14 @@
 #' underlying C runtime.)
 #' @param ordered_result single logical value; should result be order?
 #' default FALSE.
-#' @param env the environment of ???
-#' @param fac single logical value. Should returned vector be of class
-#' factor? Default TRUE.
-#' @param allow_gap single logical value. Should a local gap be
-#' allowed (break name 'ee')? Default FALSE. Not yet implemented.
+#' @param env the environment of base::cut, if that is triggered.
+#' Default parent.frame().
 #'
-#' @return a vector of the same length as vec and of the categories found in
-#' labels, or breaks if labels is null.
+#' @return a factored vector; x is classified based on user inputs.
 #'
-#' @note (1) It is not possible to define a gap where a particular interval is
-#' not categorized, unless the gap is at the start or end of the breaks.
-#' (2) http://stackoverflow.com/questions/2769510/numeric-comparison-difficulty-in-r
-#' Please be aware that this function is not designed for categorizing
-#' numeric intervals that require sensitivity past what base R handles
-#' (around 1e-10).
+#' @note Very large and very small numbers (less than 1e-12, greater than
+#' 1e16) may not work, use at your own risk, or, transform your data with a
+#' shift parameter to a safe input range.
 #'
 #' @examples
 #' \dontrun{ # maybe this will work later, not now
@@ -51,17 +45,15 @@
 #'   cat = c("best", "borderline", "poor"))
 #' }
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#' ordered_result = TRUE, allow_gap = FALSE,
-#' labels = Cs(best, borderline, poor), fac = TRUE)
+#' ordered_result = TRUE, label_vec = Cs(best, borderline, poor))
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE, allow_gap = FALSE,
-#'                labels = Cs(best, borderline, poor), fac = FALSE)
+#'             ordered_result = FALSE,
+#'             label_vec = Cs(best, borderline, poor))
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE, allow_gap = FALSE,
-#'                         labels = NULL, fac = TRUE)
+#'             ordered_result = FALSE,
+#'                         label_vec = NULL)
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE, allow_gap = FALSE,
-#'             labels = NULL, fac = FALSE)
+#'             ordered_result = FALSE, label_vec = NULL,)
 #' d <- data.table(
 #'   chol = sample(150:400, size = 1e3, replace = TRUE))
 #' breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
@@ -75,7 +67,7 @@
 #' \dontrun{
 #' # BAD - will error
 #' # error: too many labels
-#' closure_cut(1, breaks = c(i=0, i=0, i = 1), labels = c("zero", "one", "two"))
+#' closure_cut(1, breaks = c(i=0, i=0, i = 1), label_vec = c("zero", "one", "two"))
 #' two errors: break 4 misnamed, break 5 not named
 #' closure_cut(x = 1, breaks = c(i=1,e = 2, i = 3, eerie = 4, 5))
 #' }
@@ -90,13 +82,22 @@
 #' # GOOD - if you really want a gap, fix it like this:
 #' test_gap <- closure_cut(c(1, 10, 15, 20),
 #'  breaks = c(i=1, e=10-1e-10, i=10+1e-10, e=20),
-#'  labels = c("a", "gap", "b"), allow_gap = TRUE)
+#'  label_vec = c("a", "gap", "b"), allow_gap = TRUE)
 #' print(test_gap)
 #' test_gap[test_gap == "gap"] <- NA
 #' print(test_gap)
 #' }
 #'
-#' @importFrom EquaPac is.l1 is.l0 is.named
+#' \dontshow{
+#' x = 200
+#' breaks = c(i=0, ei = 200, ie = 240, e = Inf)
+#' dig_lab = 3L
+#' ordered_result = FALSE
+#' env = parent.frame()
+#' closure_cut(x, breaks, label_vec = NULL, dig_lab, ordered_result, env)
+#' }
+#'
+#' @importFrom EquaPac is.l1 is.l0 is.named stunq dig.dec
 #' @importFrom data.table data.table foverlaps shift setkey
 #' @importFrom Hmisc Cs
 #'
@@ -104,45 +105,25 @@
 NULL
 
 # R CMD checker appeasement
-x1 <- x2 <- int_labs <- result_labs <- NULL
+int_labs <- result_labs <- epsilon <- NULL
 
-# closure_cut(x, breaks, labels, dig_lab, ordered_result = TRUE, fac = TRUE, allow_gap = TRUE)
-
-
+# closure_cut(x, breaks, label_vec, dig_lab, ordered_result = TRUE, fac = TRUE, allow_gap = TRUE)
 # chol_cut(200)
-
-
-
 
 #' @rdname closure_cut
 #' @export
-closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
-  ordered_result = FALSE, # ..., verbose = getOption("verbose"),
-  env = parent.frame(), fac = TRUE, allow_gap = FALSE) {
-  # need to generate ERROR if user defined interval overlaps
-
-# LATER ...  allow various inputs
-#   switch(class(breaks)[1],
-#          "character",
-#          "list" = {breaks <- list("ii" = c(1, 2, 3, 4, 5), "ei" = c(5, 10, 15, 20))
-#               setNames(unlist(breaks, use.names=FALSE),rep(names(breaks), lengths(breaks))},
-#          "data.table" = {  break_dt <- data.table(left_pt = c(1, 10, 20, 30),
-#   right_pt = c(10, 20, 30, 100),
-#   l_type = c("i", "e", "i", "i"),
-#   r_type = c("i", "e", "e", "e"))})
-
-  # Example while building cut_closure()
-  # x = c(1, 10, 20, 30, 40, 49, 50)
-  # breaks <- c(inc = 1, ei = 10, ie = 20, ee = 30, ie = 40, excl = 50)
-  # labels <- c(letters[1:5])
-  # allow_gap = TRUE
-  # or  [1, 10), [10, 20], (20, 30), (30, 40], (40, 50)
-
+closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
+  ordered_result = FALSE, env = parent.frame()) {
   # prepare base::cut in case it needs to be used
   cut_call <- match.call()
   cut_call[1] <- call('cut')
+
+  # user input checking
   if (is.integer(x)) x <- as.numeric(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
+  if (!is.null(label_vec) && !is.character(label_vec)) {
+    stop("label_vec must be character class matching interval length, or null")
+  }
   # if breaks not named, sending to cut
   if (!is.named(breaks)) {
     return(eval(cut_call, envir = env))
@@ -160,12 +141,6 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
   if (!is.logical(ordered_result) | !is.l1(ordered_result)) {
     stop("ordered_result must be a logical vector of length 1")
   }
-  if (!is.logical(allow_gap) | !is.l1(allow_gap)) {
-    stop("allow_gap must be a logical vector of length 1")
-  }
-  if (!is.logical(fac) | !is.l1(fac)) {
-    stop("fac must be a logical vector of length 1")
-  }
   # error checking global boundary points---
   if (!identical(nchar(b_names)[1], 1L)) {
     stop("starting point must be named either 'i' or 'e'")
@@ -179,12 +154,9 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
   b_names[-c(1, length(b_names))] <-
     gsub(pattern = "^e$", x = b_names[-c(1, length(b_names))], replacement = "ei")
 
-  if (any(names(breaks) == "ii")) {
-    warning("breaks labeled 'ii' are relabeled 'ie' to prevent category overlap")
-    breaks[breaks == "ii"] <- "ie"
-  }
-  if (!allow_gap && any(names(breaks) == "ee")) {
-    stop("a break is labeled 'ee', causing a gap when allow_gap = FALSE")
+  if (any(names(b_names) == "ii")) {
+    warning("breaks labeled 'ii'; relabeled 'ie' to prevent category overlap")
+    b_names[b_names == "ii"] <- "ie"
   }
 
     # we dont want any names except i or e
@@ -193,7 +165,7 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
              x sent to base::cut since names(breaks) were ambiguous.")
       return(eval(cut_call, envir = env))
     }
-  b_nums <- c(breaks[1], rep(breaks[-c(1, length(breaks))], each = 2),
+  b_nums <- c(breaks[[1]], rep(breaks[-c(1, length(breaks))], each = 2),
               last(breaks))
   b_num_names <- paste(b_names, collapse = "")
   b_even_names <- even_char(b_num_names)
@@ -204,64 +176,49 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
   b_odd_names <- gsub(x = b_odd_names, pattern = "e", replacement = "(")
   b_odd_nums <- odd_obj(b_nums)
   b_even_nums <- even_obj(b_nums)
+  precision_int <- c(b_odd_nums, b_even_nums)
+  attr(precision_int, "names") <- c(b_odd_names, b_even_names)
+  p_order <-
+    c(seq(1, 2*length(b_odd_names), 2), seq(2, 2*length(b_odd_names), 2))
+  precision_int <- precision_int[order(p_order)]
   interval_label <- paste0(b_odd_names, b_odd_nums, ",", b_even_nums, b_even_names)
+  # for aesthetic reasons only, fixing +/- Inf label
+  interval_label <- gsub(x = interval_label, pattern = "Inf]", replace = "Inf)")
+  interval_label <- gsub(x = interval_label, pattern = "\\[-Inf", replace = "(-Inf")
 
   # TODO: need to add pretty print breaks
   # breaks <- sapply(breaks, prettyNum, digits = dig.lab)
 
-  # .bincode needs well defined breaks
-  interval_breaks <- strsplit(interval_label, ",")
-  interval_breaks <-
-    rapply(interval_breaks, f = function(x) gsub(pattern = "\\[|\\]", x = x, replacement = ""))
-  epsilon <- 1e-9 # 4e-15
-  add_eps <- grep(x = interval_breaks, pattern = "[(]")
-  sub_eps <- grep(x = interval_breaks, pattern = "[)]")
+  # smaller espilons possible via:
+  # https://cran.r-project.org/web/packages/Rmpfr/vignettes/Rmpfr-pkg.pdf
+  epsilon <- max(min(x)*1e-16, 5e-14)
+  if (min(x) < 1e-13) {
+    p_warn("R precision fails past 16 digits.
+           (1) check a few extreme cases of x by hand to see if you are ok.
+           (2) shift your dataset above 0.
+           (3) consider packages like Rmpfr to handle your data.")
+  }
+  add_eps <- grep(x = names(precision_int), pattern = "[(]")
+  sub_eps <- grep(x = names(precision_int), pattern = "[)]")
+  precision_int[add_eps] <- precision_int[add_eps] + epsilon
+  precision_int[sub_eps] <- precision_int[sub_eps] + epsilon
+  precision_int <- stunq(unlist(precision_int, use.names = FALSE))
+  precision_int[is.infinite(precision_int)] <- 999 # 1e+308
+  inc_low = b_names[1] == "i"
+  bin_segments <-
+    .bincode(round(precision_int, dig.dec(epsilon)["round"]-1),
+             breaks = precision_int, include.lowest = inc_low)
+  x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
 
-  interval_breaks[add_eps] <- paste(gsub(x = interval_breaks[add_eps],
-    pattern = "[(]", replacement = ""), "+", epsilon)
-  interval_breaks[sub_eps] <- paste("-", epsilon, "+",
-      gsub(x = interval_breaks[sub_eps], pattern = "[)]", replacement = ""))
-  # parse breaks
-  interval_breaks <-
-    vapply(
-      interval_breaks, FUN = function(x) {
-        eval(parse(text = x))
-      }, FUN.VALUE = 1.1, USE.NAMES = FALSE)
-
-  interval_breaks[is.infinite(interval_breaks)] <- 1e+308
-  # heart of code ... Rcpp would give a boost, dont know how much
-  int_bk_dt <-
-    data.table(matrix(
-      interval_breaks, ncol = 2, byrow = TRUE,
-      dimnames = list(NULL, Cs(start, end))
-    ))
-  if (is.null(labels) && is.character(labels)) {
-    int_bk_dt[, int_labs := interval_label]
+  # factor with label_vec as labels
+  if (!is.null(label_vec)) {
+    x_binned <-
+      factor(x_binned, levels = unique(bin_segments),
+             labels = label_vec, ordered = ordered_result)
   } else {
-    int_bk_dt[, int_labs := interval_label]
+    # factor with interval levels as labels
+    x_binned <- factor(x_binned, levels = unique(bin_segments),
+                       ordered = ordered_result, label = interval_label)
   }
-
-  if (int_bk_dt[, length(unique(int_labs))] != length(labels) &&
-      is.character(labels) & !is.null(labels)) {
-    stop("labels do not match number of intervals")
-  }
-
-  if (fac && !is.null(labels) && is.character(labels)) {
-    int_bk_dt[, result_labs :=
-              factor(int_labs, levels = int_labs,
-      ordered = ordered_result, labels = labels)]
-  } else if (fac && (is.null(labels) | !is.character(labels))) {
-    int_bk_dt[, result_labs := factor(int_labs, levels = int_bk_dt[order(start), int_labs])]
-  } else if (!fac && (is.null(labels) | !is.character(labels))) {
-    int_bk_dt[, result_labs := int_labs]
-  } else if (!fac && (!is.null(labels) & is.character(labels))) {
-    int_bk_dt[, result_labs := labels]
-  }
-
-  setkey(int_bk_dt, start, end)
-  int_bk_dt <- foverlaps(data.table(x1 = x, x2 = x),
-            int_bk_dt,
-            by.x = Cs(x1, x2),
-            by.y = Cs(start, end))
-  int_bk_dt[, result_labs]
+  return(x_binned)
 }

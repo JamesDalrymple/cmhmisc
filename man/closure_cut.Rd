@@ -4,9 +4,8 @@
 \alias{closure_cut}
 \title{Interval Closure Classification}
 \usage{
-closure_cut(x, breaks, labels = NULL, dig_lab = 3L,
-  ordered_result = FALSE, env = parent.frame(), fac = TRUE,
-  allow_gap = FALSE)
+closure_cut(x, breaks, label_vec = NULL, dig_lab = 3L,
+  ordered_result = FALSE, env = parent.frame())
 }
 \arguments{
 \item{x}{A numeric or integer vector to be categorized. Factors are
@@ -20,7 +19,7 @@ to base::cut. Breaks that leave gaps will result in NA values. If you name
 breaks with 'i' and 'e', do so consistently or you will be redirected to
 base::cut with a warning.}
 
-\item{labels}{The labels for the breaks. Order and length of labels must be
+\item{label_vec}{The labels for the breaks. Order and length of labels must be
 consistent with breaks. Default null causes labels to be based on break
 intervals.}
 
@@ -36,31 +35,23 @@ underlying C runtime.)}
 \item{ordered_result}{single logical value; should result be order?
 default FALSE.}
 
-\item{env}{the environment of ???}
-
-\item{fac}{single logical value. Should returned vector be of class
-factor? Default TRUE.}
-
-\item{allow_gap}{single logical value. Should a local gap be
-allowed (break name 'ee')? Default FALSE. Not yet implemented.}
+\item{env}{the environment of base::cut, if that is triggered.
+Default parent.frame().}
 }
 \value{
-a vector of the same length as vec and of the categories found in
-labels, or breaks if labels is null.
+a factored vector; x is classified based on user inputs.
 }
 \description{
 interval categorization capable of handling each interval's
 boundary closures independently. This is designed to be used when base::cut
 does not fully meet your needs, and is a wrapper for cut when breaks are
-not named (see breaks).
+not named (see breaks). Unlike cut, gaps are permissible in consecutive
+intervals, but will generate NAs.
 }
 \note{
-(1) It is not possible to define a gap where a particular interval is
-not categorized, unless the gap is at the start or end of the breaks.
-(2) http://stackoverflow.com/questions/2769510/numeric-comparison-difficulty-in-r
-Please be aware that this function is not designed for categorizing
-numeric intervals that require sensitivity past what base R handles
-(around 1e-10).
+Very large and very small numbers (less than 1e-12, greater than
+1e16) may not work, use at your own risk, or, transform your data with a
+shift parameter to a safe input range.
 }
 \examples{
 \dontrun{ # maybe this will work later, not now
@@ -70,17 +61,15 @@ chol_guide <- data.table(
   cat = c("best", "borderline", "poor"))
 }
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-ordered_result = TRUE, allow_gap = FALSE,
-labels = Cs(best, borderline, poor), fac = TRUE)
+ordered_result = TRUE, label_vec = Cs(best, borderline, poor))
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-            ordered_result = FALSE, allow_gap = FALSE,
-               labels = Cs(best, borderline, poor), fac = FALSE)
+            ordered_result = FALSE,
+            label_vec = Cs(best, borderline, poor))
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-            ordered_result = FALSE, allow_gap = FALSE,
-                        labels = NULL, fac = TRUE)
+            ordered_result = FALSE,
+                        label_vec = NULL)
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-            ordered_result = FALSE, allow_gap = FALSE,
-            labels = NULL, fac = FALSE)
+            ordered_result = FALSE, label_vec = NULL,)
 d <- data.table(
   chol = sample(150:400, size = 1e3, replace = TRUE))
 breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
@@ -94,7 +83,7 @@ closure_cut(x=1, breaks = c(i = 10, i = 20))
 \dontrun{
 # BAD - will error
 # error: too many labels
-closure_cut(1, breaks = c(i=0, i=0, i = 1), labels = c("zero", "one", "two"))
+closure_cut(1, breaks = c(i=0, i=0, i = 1), label_vec = c("zero", "one", "two"))
 two errors: break 4 misnamed, break 5 not named
 closure_cut(x = 1, breaks = c(i=1,e = 2, i = 3, eerie = 4, 5))
 }
@@ -109,10 +98,19 @@ closure_cut(10, breaks = c(e=1, e=10-1e-10, i=10+1e-10, e=20),
 # GOOD - if you really want a gap, fix it like this:
 test_gap <- closure_cut(c(1, 10, 15, 20),
  breaks = c(i=1, e=10-1e-10, i=10+1e-10, e=20),
- labels = c("a", "gap", "b"), allow_gap = TRUE)
+ label_vec = c("a", "gap", "b"), allow_gap = TRUE)
 print(test_gap)
 test_gap[test_gap == "gap"] <- NA
 print(test_gap)
+}
+
+\dontshow{
+x = 200
+breaks = c(i=0, ei = 200, ie = 240, e = Inf)
+dig_lab = 3L
+ordered_result = FALSE
+env = parent.frame()
+closure_cut(x, breaks, label_vec = NULL, dig_lab, ordered_result, env)
 }
 
 }
