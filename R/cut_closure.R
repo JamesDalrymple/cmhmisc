@@ -55,7 +55,7 @@
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
 #'             ordered_result = FALSE, label_vec = NULL,)
 #' d <- data.table(
-#'   chol = sample(150:400, size = 1e3, replace = TRUE))
+#'   chol = sample(150:400, size = 1e3, replacement = TRUE))
 #' breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 #' d[, cat := closure_cut(chol, breaks)]
 #' d
@@ -183,16 +183,18 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
   precision_int <- precision_int[order(p_order)]
   interval_label <- paste0(b_odd_names, b_odd_nums, ",", b_even_nums, b_even_names)
   # for aesthetic reasons only, fixing +/- Inf label
-  interval_label <- gsub(x = interval_label, pattern = "Inf]", replace = "Inf)")
-  interval_label <- gsub(x = interval_label, pattern = "\\[-Inf", replace = "(-Inf")
+  interval_label <- gsub(x = interval_label,
+                         pattern = "Inf]", replacement = "Inf)")
+  interval_label <- gsub(x = interval_label,
+                         pattern = "\\[-Inf", replacement = "(-Inf")
 
   # TODO: need to add pretty print breaks
   # breaks <- sapply(breaks, prettyNum, digits = dig.lab)
 
   # smaller espilons possible via:
   # https://cran.r-project.org/web/packages/Rmpfr/vignettes/Rmpfr-pkg.pdf
-  epsilon <- max(min(x)*1e-16, 5e-14)
-  if (min(x) < 1e-13) {
+  epsilon <- max(min(x)*1e-16, 5e-13)
+  if (min(x) < 1e-12) {
     p_warn("R precision fails past 16 digits.
            (1) check a few extreme cases of x by hand to see if you are ok.
            (2) shift your dataset above 0.
@@ -201,13 +203,13 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
   add_eps <- grep(x = names(precision_int), pattern = "[(]")
   sub_eps <- grep(x = names(precision_int), pattern = "[)]")
   precision_int[add_eps] <- precision_int[add_eps] + epsilon
-  precision_int[sub_eps] <- precision_int[sub_eps] + epsilon
+  precision_int[sub_eps] <- precision_int[sub_eps] - epsilon
   precision_int <- stunq(unlist(precision_int, use.names = FALSE))
-  precision_int[is.infinite(precision_int)] <- 999 # 1e+308
+  precision_int[is.infinite(precision_int)] <- 9999 # 1e+308
   inc_low = b_names[1] == "i"
   bin_segments <-
-    .bincode(round(precision_int, dig.dec(epsilon)["round"]-1),
-             breaks = precision_int, include.lowest = inc_low)
+    .bincode(precision_int,
+             breaks = round(precision_int, dig.dec(epsilon)["round"]-1), include.lowest = inc_low)
   x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
 
   # factor with label_vec as labels
@@ -218,7 +220,7 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
   } else {
     # factor with interval levels as labels
     x_binned <- factor(x_binned, levels = unique(bin_segments),
-                       ordered = ordered_result, label = interval_label)
+                       ordered = ordered_result, labels = interval_label)
   }
   return(x_binned)
 }

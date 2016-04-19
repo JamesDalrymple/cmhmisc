@@ -71,7 +71,7 @@ closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
             ordered_result = FALSE, label_vec = NULL,)
 d <- data.table(
-  chol = sample(150:400, size = 1e3, replace = TRUE))
+  chol = sample(150:400, size = 1e3, replacement = TRUE))
 breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 d[, cat := closure_cut(chol, breaks)]
 d
