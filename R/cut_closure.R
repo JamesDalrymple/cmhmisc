@@ -84,7 +84,7 @@
 #' print(test_gap)
 #' }
 #'
-#' @importFrom EquaPac is.l1 is.l0
+#' @importFrom EquaPac is.l1 is.l0 is.named
 #' @importFrom data.table data.table foverlaps shift setkey
 #' @importFrom Hmisc Cs
 #'
