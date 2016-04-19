@@ -50,8 +50,20 @@
 #'   end = c(200, 240, Inf),
 #'   cat = c("best", "borderline", "poor"))
 #' }
+#' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+#' ordered_result = TRUE, allow_gap = FALSE,
+#' labels = Cs(best, borderline, poor), fac = TRUE)
+#' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+#'             ordered_result = FALSE, allow_gap = FALSE,
+#'                labels = Cs(best, borderline, poor), fac = FALSE)
+#' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+#'             ordered_result = FALSE, allow_gap = FALSE,
+#'                         labels = NULL, fac = TRUE)
+#' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+#'             ordered_result = FALSE, allow_gap = FALSE,
+#'             labels = NULL, fac = FALSE)
 #' d <- data.table(
-#'   chol = sample(150:400, size = 1e7, replace = TRUE))
+#'   chol = sample(150:400, size = 1e3, replace = TRUE))
 #' breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 #' d[, cat := closure_cut(chol, breaks)]
 #' d
@@ -92,9 +104,15 @@
 NULL
 
 # R CMD checker appeasement
-x1 <- x2 <- NULL
+x1 <- x2 <- int_labs <- result_labs <- NULL
 
 # closure_cut(x, breaks, labels, dig_lab, ordered_result = TRUE, fac = TRUE, allow_gap = TRUE)
+
+
+# chol_cut(200)
+
+
+
 
 #' @rdname closure_cut
 #' @export
@@ -155,6 +173,7 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
   if (!identical(nchar(b_names[length(b_names)]), 1L)) {
     stop("ending point must be named either 'i' or 'e'")
   }
+
   b_names[-c(1, length(b_names))] <-
     gsub(pattern = "^i$", x = b_names[-c(1, length(b_names))], replacement = "ie")
   b_names[-c(1, length(b_names))] <-
@@ -217,9 +236,26 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
       dimnames = list(NULL, Cs(start, end))
     ))
   if (is.null(labels) && is.character(labels)) {
-    int_bk_dt[, labels := interval_label]
+    int_bk_dt[, int_labs := interval_label]
   } else {
-    int_bk_dt[, labels := interval_label]
+    int_bk_dt[, int_labs := interval_label]
+  }
+
+  if (int_bk_dt[, length(unique(int_labs))] != length(labels) &&
+      is.character(labels) & !is.null(labels)) {
+    stop("labels do not match number of intervals")
+  }
+
+  if (fac && !is.null(labels) && is.character(labels)) {
+    int_bk_dt[, result_labs :=
+              factor(int_labs, levels = int_labs,
+      ordered = ordered_result, labels = labels)]
+  } else if (fac && (is.null(labels) | !is.character(labels))) {
+    int_bk_dt[, result_labs := factor(int_labs, levels = int_bk_dt[order(start), int_labs])]
+  } else if (!fac && (is.null(labels) | !is.character(labels))) {
+    int_bk_dt[, result_labs := int_labs]
+  } else if (!fac && (!is.null(labels) & is.character(labels))) {
+    int_bk_dt[, result_labs := labels]
   }
 
   setkey(int_bk_dt, start, end)
@@ -227,5 +263,5 @@ closure_cut <- function(x, breaks, labels = NULL, dig_lab = 3L,
             int_bk_dt,
             by.x = Cs(x1, x2),
             by.y = Cs(start, end))
-  int_bk_dt[, labels]
+  int_bk_dt[, result_labs]
 }

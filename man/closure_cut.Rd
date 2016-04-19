@@ -69,8 +69,20 @@ chol_guide <- data.table(
   end = c(200, 240, Inf),
   cat = c("best", "borderline", "poor"))
 }
+closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+ordered_result = TRUE, allow_gap = FALSE,
+labels = Cs(best, borderline, poor), fac = TRUE)
+closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+            ordered_result = FALSE, allow_gap = FALSE,
+               labels = Cs(best, borderline, poor), fac = FALSE)
+closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+            ordered_result = FALSE, allow_gap = FALSE,
+                        labels = NULL, fac = TRUE)
+closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
+            ordered_result = FALSE, allow_gap = FALSE,
+            labels = NULL, fac = FALSE)
 d <- data.table(
-  chol = sample(150:400, size = 1e7, replace = TRUE))
+  chol = sample(150:400, size = 1e3, replace = TRUE))
 breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
 d[, cat := closure_cut(chol, breaks)]
 d
