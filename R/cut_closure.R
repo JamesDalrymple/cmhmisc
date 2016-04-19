@@ -193,7 +193,7 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
 
   # smaller espilons possible via:
   # https://cran.r-project.org/web/packages/Rmpfr/vignettes/Rmpfr-pkg.pdf
-  epsilon <- max(min(x)*1e-16, 5e-13)
+  epsilon <- max(min(x, na.rm = TRUE)*1e-16, 1e-12)
   if (min(x) < 1e-12) {
     p_warn("R precision fails past 16 digits.
            (1) check a few extreme cases of x by hand to see if you are ok.
@@ -205,12 +205,15 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
   precision_int[add_eps] <- precision_int[add_eps] + epsilon
   precision_int[sub_eps] <- precision_int[sub_eps] - epsilon
   precision_int <- stunq(unlist(precision_int, use.names = FALSE))
-  precision_int[is.infinite(precision_int)] <- 1e+308
+  precision_int[is.infinite(precision_int)] <-
+    min(max(c(x, precision_int), na.rm = TRUE) + epsilon, 1e+308)
   inc_low = b_names[1] == "i"
   bin_segments <-
     .bincode(precision_int,
              breaks = round(precision_int, dig.dec(epsilon)["round"]-1),
              include.lowest = inc_low)
+  bin_segments
+
   # heart of this function
   x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
   # matching segments up to x_binned categories
