@@ -44,22 +44,25 @@
 #'   end = c(200, 240, Inf),
 #'   cat = c("best", "borderline", "poor"))
 #' }
+#'
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
 #' ordered_result = TRUE, label_vec = Cs(best, borderline, poor))
+#'
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE,
-#'             label_vec = Cs(best, borderline, poor))
+#'  ordered_result = FALSE, label_vec = NULL)
+#'
 #' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE,
-#'                         label_vec = NULL)
-#' closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-#'             ordered_result = FALSE, label_vec = NULL,)
+#'    ordered_result = TRUE, label_vec = NULL,)
 #' d <- data.table(
 #'   chol = sample(150:400, size = 1e3, replace = TRUE))
-#' # breaks  <-  c(i = 0, ie = 200, ie = 240, e = Inf)
+#' # breaks = c(i=0, ei = 200, ie = 240, e = Inf)
 #' breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
+#' closure_cut(204, breaks)
+#'
 #' d[, cat := closure_cut(chol, breaks)]
-#' # x <- d[, chol]
+#' d[between(chol, 0, 200-1e-3), unique(cat)]
+#' d[between(chol, 200, 240), unique(cat)]
+#' d[between(chol, 240+1e-3, 9e10), unique(cat)]
 #'
 #' # gaps will generate NA values, consistent with cut
 #' closure_cut(1, breaks = c(10, 20)) # base::cut applied
@@ -95,10 +98,11 @@
 #' dig_lab = 3L
 #' ordered_result = FALSE
 #' env = parent.frame()
+#' label_vec = NULL
 #' closure_cut(x, breaks, label_vec = NULL, dig_lab, ordered_result, env)
 #' }
 #'
-#' @importFrom EquaPac is.l1 is.l0 is.named stunq dig.dec
+#' @importFrom EquaPac dig.dec is.l1 is.l0 stunq is.named
 #' @importFrom data.table data.table foverlaps shift setkey
 #' @importFrom Hmisc Cs
 #'
@@ -114,7 +118,7 @@ int_labs <- result_labs <- epsilon <- NULL
 #' @rdname closure_cut
 #' @export
 closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
-  ordered_result = FALSE, env = parent.frame()) {
+                        ordered_result = FALSE, env = parent.frame()) {
   # prepare base::cut in case it needs to be used
   cut_call <- match.call()
   cut_call[1] <- call('cut')
@@ -160,12 +164,12 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
     b_names[b_names == "ii"] <- "ie"
   }
 
-    # we dont want any names except i or e
-    if (!is.l0(grep("i|e", b_names, ignore.case = FALSE, invert = TRUE))) {
-      warning("breaks were named, but every point must be labeled 'i' or 'e'.
-             x sent to base::cut since names(breaks) were ambiguous.")
-      return(eval(cut_call, envir = env))
-    }
+  # we dont want any names except i or e
+  if (!is.l0(grep("i|e", b_names, ignore.case = FALSE, invert = TRUE))) {
+    warning("breaks were named, but every point must be labeled 'i' or 'e'.
+            x sent to base::cut since names(breaks) were ambiguous.")
+    return(eval(cut_call, envir = env))
+  }
   b_nums <- c(breaks[[1]], rep(breaks[-c(1, length(breaks))], each = 2),
               last(breaks))
   b_num_names <- paste(b_names, collapse = "")
@@ -194,8 +198,9 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
 
   # smaller espilons possible via:
   # https://cran.r-project.org/web/packages/Rmpfr/vignettes/Rmpfr-pkg.pdf
-  epsilon <- max(min(x, na.rm = TRUE)*1e-16, 1e-12)
-  if (min(x) < 1e-12) {
+  # epsilon <- max(min(x, na.rm = TRUE)*1e-16, 1e-10)
+  epsilon = 1e-3
+  if (min(x) < 1e-10) {
     p_warn("R precision fails past 16 digits.
            (1) check a few extreme cases of x by hand to see if you are ok.
            (2) shift your dataset above 0.
@@ -210,26 +215,27 @@ closure_cut <- function(x, breaks, label_vec = NULL, dig_lab = 3L,
     min(max(c(x, precision_int), na.rm = TRUE) + epsilon, 1e+308)
   inc_low = b_names[1] == "i"
   bin_segments <-
-    .bincode(precision_int,
-             breaks = round(precision_int, dig.dec(epsilon)["round"]-1),
-             include.lowest = inc_low)
+    .bincode(c(odd_obj(precision_int), last(precision_int)),
+             breaks = round(precision_int, dig.dec(epsilon)["round"] - 1),
+             include.lowest = inc_low, right = FALSE)
   # matching segments up to x_binned categories
   bin_segments <- stunq(bin_segments)
   bin_order_segments <- match(bin_segments, bin_segments)
 
   # heart of this function
-  x_binned <- .bincode(x, breaks = precision_int, include.lowest = inc_low)
+  x_binned <- .bincode(x, include.lowest = inc_low,
+    breaks = c(odd_obj(precision_int), last(precision_int)), right = FALSE)
   # matching segments up to bin_segments categories
-  x_binned <- match(x_binned, stunq(x_binned))
+  # x_binned <- match(x_binned, stunq(x_binned))
   # factor with label_vec as labels
   if (!is.null(label_vec)) {
-    x_binned <-
+    x_cat <-
       factor(x_binned, levels = bin_order_segments,
              labels = label_vec, ordered = ordered_result)
   } else {
     # factor with interval levels as labels
-    x_binned <- factor(x_binned, levels = bin_order_segments,
+    x_cat <- factor(x_binned, levels = bin_order_segments,
                        ordered = ordered_result, labels = interval_label)
   }
-  return(x_binned)
-}
+  return(x_cat)
+  }
