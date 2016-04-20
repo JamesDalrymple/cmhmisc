@@ -62,7 +62,7 @@ chol_guide <- data.table(
 }
 
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
-ordered_result = TRUE, label_vec = Cs(best, borderline, poor))
+ ordered_result = TRUE, label_vec = Cs(best, borderline, poor))
 
 closure_cut(x = 200, breaks = c(i=0, ei = 200, ie = 240, e = Inf),
  ordered_result = FALSE, label_vec = NULL)
@@ -73,11 +73,12 @@ d <- data.table(
   chol = sample(150:400, size = 1e3, replace = TRUE))
 # breaks = c(i=0, ei = 200, ie = 240, e = Inf)
 breaks  <-  c(i = 0, e = 200, i = 240, e = Inf)
-closure_cut(204, breaks)
+closure_cut(240, breaks)
 
 d[, cat := closure_cut(chol, breaks)]
 d[between(chol, 0, 200-1e-3), unique(cat)]
 d[between(chol, 200, 240), unique(cat)]
+
 d[between(chol, 240+1e-3, 9e10), unique(cat)]
 
 # gaps will generate NA values, consistent with cut
@@ -109,9 +110,14 @@ print(test_gap)
 }
 
 \dontshow{
-x = 200
+x = c(0, 5, 10, 20, 25)
+breaks_whole = c(i=0, ee = 10, ee = 20, e = Inf)
+closure_cut(x, breaks = breaks_whole, label_vec = NULL,
+ dig_lab = 3, ordered_result = FALSE)
+
+x = 240
 breaks = c(i=0, ei = 200, ie = 240, e = Inf)
-dig_lab = 3L
+#' dig_lab = 3L
 ordered_result = FALSE
 env = parent.frame()
 label_vec = NULL
