@@ -54,7 +54,7 @@ NULL
 
 index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
   ovr_vec <- xid <- yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <-
-  remove_record <- p_integer <- i.p_integer <- grp_id <- .GRP <- grp_n <-
+  remove_record <- p_col <- i.p_col <- grp_id <- .GRP <- grp_n <-
   add_record <- new_index <- p_col <- NULL
 
 # trouble_cases <- c(10450, 11660, 10563, 11091, 220766)
@@ -364,9 +364,9 @@ priority_overlap <- function(data,
   )
   group_cols <- setdiff(group_cols, priority_col)
   setnames(d, priority_col, "p_col")
-  setnames(d, priority_value, "p_integer")
-  d[, p_integer := as.int(p_integer)]
-  stopifnot(d[, class(p_integer)] == "integer")
+  # setnames(d, priority_value, "p_integer")
+  d[, p_col := as.int(p_col)]
+  stopifnot(d[, class(p_col)] == "integer")
   d[!is.na(end_date), end_col := end_date]
   setkeyv(d, c(group_cols, "start_date", "end_col"))
   overlap_pairs_dt <-
@@ -414,11 +414,11 @@ priority_overlap <- function(data,
     messy_ovr_dt, messy_ovr_dt,
     by.x = c(group_cols, "start_date", "end_date"),
     by.y = c(group_cols, "start_date", "end_date"))
-  # remove records that have 'lower' p_integer and are completely 'within'
-  messy_ovr_dt[, remove_record := ifelse(p_integer > i.p_integer &
+  # remove records that have 'lower' p_col and are completely 'within'
+  messy_ovr_dt[, remove_record := ifelse(p_col > i.p_col &
                                            start_date > i.start_date & end_date < i.end_date, TRUE, FALSE)]
   messy_ovr_dt[start_date >= i.start_date & end_date <= i.end_date &
-                 p_integer > i.p_integer, remove_record := TRUE]
+                 p_col > i.p_col, remove_record := TRUE]
   # keep non-duplicate + needed records
   messy_ovr_dt[, grp_id := .GRP, by = c(group_cols, "p_col")]
   messy_ovr_dt[, grp_n := .N, by = c(group_cols, "p_col")]
@@ -427,26 +427,26 @@ priority_overlap <- function(data,
   messy_ovr_dt <- messy_ovr_dt[remove_record == FALSE | is.na(remove_record)]
   messy_ovr_dt[, add_record := NA_character_]
   # higher priority does not affect lower priority
-  messy_ovr_dt[p_integer < i.p_integer, add_record := "do not change"]
+  messy_ovr_dt[p_col < i.p_col, add_record := "do not change"]
   # lower priority followed by overlapping higher priority
-  messy_ovr_dt[p_integer < i.p_integer & start_date < i.start_date &
+  messy_ovr_dt[p_col < i.p_col & start_date < i.start_date &
                  end_date >= i.start_date, add_record := "do not change"]
   # lower priority 'within' higher priority
-  messy_ovr_dt[p_integer > i.p_integer & start_date < i.start_date &
+  messy_ovr_dt[p_col > i.p_col & start_date < i.start_date &
                  i.end_date < end_date, add_record := "split record both sides"]
   # case 3: higher priority followed by overlapping lower
-  messy_ovr_dt[p_integer > i.p_integer & start_date < i.start_date &
+  messy_ovr_dt[p_col > i.p_col & start_date < i.start_date &
                  end_date <= i.end_date & i.start_date <= end_date,
                add_record := "shorten right side"]
   # case 4b: lower priority followed by overlapping higher priority
-  messy_ovr_dt[p_integer > i.p_integer & start_date > i.start_date &
+  messy_ovr_dt[p_col > i.p_col & start_date > i.start_date &
                  start_date <= i.end_date & i.end_date < end_date,
                add_record := "shorten left side"]
   # case 5: no overlap (shouldnt really show up)
   messy_ovr_dt[end_date < i.start_date, add_record := "no overlap"]
-  # messy_ovr_dt[p_integer < i.p_integer & i.start_date < start_date &
+  # messy_ovr_dt[p_col < i.p_col & i.start_date < start_date &
   # end_date <= i.end_date, add_record := "add record left of p_col"]
-  # messy_ovr_dt[p_integer < i.p_integer & start_date < i.end_date &
+  # messy_ovr_dt[p_col < i.p_col & start_date < i.end_date &
   # end_date > i.end_date, add_record := "add record left of p_col"]
   messy_ovr_dt[, new_index := .I]
   # cases in the middle of a split need to be discarded
@@ -501,8 +501,8 @@ priority_overlap <- function(data,
   clean_dt[, setdiff(names(clean_dt), names(split_comb)) := NULL]
   fixed_dt <- rbindlist(list(messy_ovr_dt, split_comb, clean_dt), use.names = TRUE)
   fixed_dt[, end_col := NULL]
-  setnames(fixed_dt, "p_col", priority_col)
-  setnames(fixed_dt, "p_integer", priority_value)
+  setnames(fixed_dt, old = "p_col", new = priority_col)
+  # setnames(fixed_dt, old = "p_col", new = priority_value)
   setnames(fixed_dt, "start_date", start_col)
   setnames(fixed_dt, "end_date", end_col)
   return(fixed_dt)
