@@ -9,8 +9,6 @@
 #' @param group_cols A group of columns which will collectively make a key on
 #' which to group by when reducing/collapsing the data.table object.
 #' @param priority_col A single column which will have a priority assignment.
-#' @param priority_value An integer column, where lower priorities override
-#' higher priorities. May be numeric if coerceable to integer.
 #' @param start_col The start date for record. Blanks not allowed.
 #' @param end_col The end date for the record. Blanks will be replaced, see
 #' @param overlap_int An integer, default value of 1, to find consecutive
@@ -24,7 +22,7 @@
 #' team assignment. May contain more rows than original dataset.
 #'
 #' @note Do not have data columns named strdt, enddt, pk_1, pk_2, ... You have
-#' been warned!
+#' been warned! MAJOR rewrite coming eventually... hopefully backward compatible
 #'
 #' @examples#'
 #' # how to fix if priorities are not to be accounted for...
@@ -37,7 +35,6 @@
 #' test2 <- priority_overlap(data = copy(ex_overlap),
 #'                  group_cols = c("case_no", "type"),
 #'                  priority_col = "team",
-#'                  priority_value = "priority",
 #'                  start_col = "start_date",
 #'                  end_col = "end_date",
 #'                  overlap_int = 1L,
@@ -45,8 +42,9 @@
 #' print(test2)
 #'
 #' @import data.table
+#' @importFrom car recode
 #' @importFrom Hmisc Cs
-#' @importFrom EquaPac p_warn
+#' @importFrom EquaPac p_warn grepv d.t
 #' @name overlap_functions
 NULL
 
@@ -56,19 +54,6 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
   ovr_vec <- xid <- yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <-
   remove_record <- p_col <- i.p_col <- grp_id <- .GRP <- grp_n <-
   add_record <- new_index <- p_col <- NULL
-
-# trouble_cases <- c(10450, 11660, 10563, 11091, 220766)
-
-
-# WIP <- if (FALSE) {
-#   data = copy(ex_overlap)
-#   group_cols = c(group_cols, priority_col)
-#   start_col = start_col
-#   end_col = end_col
-#   overlap_int = overlap_int
-#   analysis_date = analysis_date
-# }
-
 
 # older version (outdated 4/2/2016) -------------------------------------------
 #' @export
@@ -140,200 +125,103 @@ overlap_combine <-
     return(d)
     }
 
-if (FALSE) {
-  # overlap_dt <- fread("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.csv")
-  # overlap_dt[, start_date := as.Date(start_date, format = 'm/%d/%Y' )]
-  # overlap_dt[, end_date := as.Date(end_date, format = "%m/%d/%Y")]
-  # overlap_dt[, priority := as.int(priority)]
-  # save(overlap_dt,
-  #  file = "C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-  # load("C:/Users/dalrymplej/Documents/GitHub/wccmh/data/overlap_dt.rda")
-  # data("ex_overlap")
-
-  # how to fix if priorities are not to be accounted for...
-
-
 WIP <- if (FALSE) {
-    # copy(overlap_dt)
-    data <- readRDS(file.path("C:/Dropbox/github_clone/EToPac",
-                              "data-sets/ex_admissions.rds"))
-    data[, Cs(other1, other2) := .(seq_row(data), rev(seq_row(data)))]
-
-
-    a <- proc.time()
-    test1 <- overlap_combine(data,
-                             group_cols =
-                          c("case_no", "cmh_team","cmh_effdt", "cmh_expdt"),
-                             start_col = "team_effdt",
-                             end_col = "team_expdt",
-                             overlap_int = 1L,
-                             analysis_date = Sys.Date() + 1e3)
-    b <- proc.time() ; b - a
-    a <- proc.time()
-    test2 <- overlap_combine2(data,
-                              case_col = c("case_no"),
-                    group_cols = c("cmh_team","cmh_effdt", "cmh_expdt"),
-                    start_col = "team_effdt",
-                    end_col = "team_expdt",
-                    overlap_int = 1L,
-                    analysis_date = Sys.Date() + 1e3)
-    b <- proc.time() ; b - a
-    library(data.table)
-    library(EquaPac)
-    # sourceCpp("overlap.cpp")
-    options(showWarnCalls = TRUE,
-            max.print = 10000,
-            # scipen = 0,
-            # warn = 1,
-            warn = 1, # Turns warnings to errors
-            stringsAsFactors = FALSE,
-            error = NULL,
-            # error = recover,
-            # error = browser,
-            # browserNLdisabled = TRUE, # Enter: repeats the previous command.
-            # warn = 2, # Turns warnings to errors
-            # show.error.locations = TRUE,
-            show.error.locations = 'top',
-            showErrorCalls = TRUE
-    )
-
-    # xid = c(1L, 1L, 2L, 2L, 2L, 3L, 3L)
-    # yid = c(1L, 2L, 1L, 2L, 3L, 2L, 3L)
-    #
-    # overlap_groups(xid, yid)
-
-    # z <- d.t(xid = x[seq(x)%%2==1], yid = x[seq(x)%%2==0], key = "xid")
-    # zet <- stunq(unlist(z))
-    # z[xid > yid, `:=`(yid = xid, xid = yid)]
-    # zm <- z[!duplicated(z) & xid != yid][order(xid, yid)]
-    # zm
-    # fs <- function(SD) t(apply(SD, 1, sort))
-    # z[xid == 1 | yid == 1,  t(apply(fs(.SD), 2, list))]
-    # lapply(xxx, 2, list)
-    # as.list(xxx)
-    # xdc <- dcast(melt(x, id.vars = Cs(xid, yid)), yid ~ xid)
-    # merge(xdc, xdc, by = Cs(yid))
-    # x[, yid, by = xid]
-    # sourceCpp(file = "fasterLm.cpp")
-    # library(Rcpp)
-
-    # test1$case,test2$case
-    # dm <- merge(test1, test2, by.x = Cs(case_no, group_cols), by.y = )
-
-    # data <- fread(file.path(".", "data","ex_overlap.csv"))
-    # data <- copy(data(ex_overlap))
-    # data[, start_date := as.Date(.I)]
-    case_col = c("case_no")
-    group_cols = c("cmh_team","cmh_effdt", "cmh_expdt")
-    start_col = "team_effdt"
-    end_col = "team_expdt"
-    overlap_int = 1L
-    analysis_date = Sys.Date() + 1e3
-    # ex_overlap - package data example
-    data = copy(ex_overlap)
-    case_col = "case_no"
-    group_cols = c("team")
-    start_col = "start_date"
-    end_col = "end_date"
-    overlap_int = 1L
-    analysis_date = Sys.Date() + 999
-
-
-  }
-
-  overlap_combine2 <-
-    function(data, case_col, group_cols, start_col, end_col,
-             overlap_int = 1L, analysis_date = Sys.Date()) {
-      focus_flds  <- c(start_col, end_col, case_col, group_cols)
-      remand_flds <- setdiff(names(data), focus_flds)
-      d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
-      # GS_v <- paste0("grp", seq(group_cols))
-      GS_v <- group_cols
-      SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
-      CS_v <- Cs(case)
-      setnames(d, c(SD_v, CS_v, GS_v, remand_flds))
-      set(d, j = SD_v, value =
-            lapply(d[,SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
-      if (!inherits(analysis_date, what = "Date"))
-        analysis_date <- as.Date(analysis_date)
-      d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
-      # d[uN > 3]
-      # setorderv(d, c(CS_v, GS_v, SD_v))
-      setkeyv(d, c(SD_v))
-      # d[, fl_pk := 1]
-      # d[case==1126484]
-      # Rcpp::sourceCpp("./src/overlap.cpp")
-      # d[case==244779]
-      # casenum <- 10499
-      # casenum <- 244779
-      # casenum <- 1126484
-      d[, fl_pk := NA_integer_]
-      folp <- function(SD1, SD2, type = "any", which = TRUE, mult = "all") {
-        flopz <<- foverlaps(SD1, SD2, type = type, which = which, mult = mult)
+case <- uN <- fl_pk <- gs_i <- pk <- fdate <- ldate <- NULL
+overlap_combine2 <-
+  function(data,
+           case_col,
+           group_cols,
+           start_col,
+           end_col,
+           overlap_int = 1L,
+           analysis_date = Sys.Date()) {
+    focus_flds  <- c(start_col, end_col, case_col, group_cols)
+    remand_flds <- setdiff(names(data), focus_flds)
+    d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
+    GS_v <- group_cols
+    SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
+    CS_v <- Cs(case)
+    setnames(d, c(SD_v, CS_v, GS_v, remand_flds))
+    set(d,
+        j = SD_v,
+        value = lapply(d[, SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
+    if (!inherits(analysis_date, what = "Date"))
+      analysis_date <- as.Date(analysis_date)
+    d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
+    # d[uN > 3]
+    # setorderv(d, c(CS_v, GS_v, SD_v))
+    setkeyv(d, c(SD_v))
+    # d[, fl_pk := 1]
+    # d[case==1126484]
+    # Rcpp::sourceCpp("./src/overlap.cpp")
+    # d[case==244779]
+    # casenum <- 10499
+    # casenum <- 244779
+    # casenum <- 1126484
+    d[, fl_pk := NA_integer_]
+    folp <-
+      function(SD1,
+               SD2,
+               type = "any",
+               which = TRUE,
+               mult = "all") {
+        flopz <<-
+          foverlaps(SD1,
+                    SD2,
+                    type = type,
+                    which = which,
+                    mult = mult)
         z <- copy(flopz)
         zset <- d.t(xid = stunq(z$xid), key = "xid")
         z[xid > yid, `:=`(yid = xid, xid = yid)]
         z <- z[!duplicated(z)][order(xid, yid)] # & xid != yid
-        if (z[, !any(xid != yid)] & nrow(z) == nrow(zset)) {
+        if (z[,!any(xid != yid)] & nrow(z) == nrow(zset)) {
           return(z[, .(as.integer(yid))])
         } else if (z[, any(xid != yid)]) {
-          recode <- car::recode
           rct <- copy(z[xid != yid])
-          for (i in rev(seq_row(rct))) { # i=4 i=3 i=2 i=1
+          for (i in rev(seq_row(rct))) {
+            # i=4 i=3 i=2 i=1
             rcs <- paste0(rct[i, yid], "=", rct[i, xid])
             z[, Cs(xid, yid) := lapply(.SD, recode, rcs)]
           }
           setkey(z, xid)
-          return(z[zset, uni(.SD), roll = TRUE][,.(as.integer(yid))])
+          return(z[zset, uni(.SD), roll = TRUE][, .(as.integer(yid))])
         }
         stop("The flop function has no idea how to handle a condition.")
-
       }
+    #       d[uN > 1 & case == casenum]
+    #        #& cmh_team == "Child"
+    #       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
 
-#       d[uN > 1 & case == casenum]
-#        #& cmh_team == "Child"
-#       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
+    d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
+    d[is.na(fl_pk), fl_pk := 1L]
 
-      d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
-      d[is.na(fl_pk), fl_pk := 1L]
-
-      setorderv(d, c(CS_v, "fl_pk", GS_v))
-      d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
-      spntf_mnchr_v <- d[,unlist(
-        .(case = max(nchar(case)),
-          ugrp = max(nchar(as.character(gs_i))),
-          ufol = max(nchar(fl_pk))))]
-      fmt <- paste0("%",
-                    spntf_mnchr_v['case'], ".0f-%",
-                    spntf_mnchr_v['ugrp'], ".0f-%",
-                    spntf_mnchr_v['ufol'], ".0f")
-      d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
-      d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
-      d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
-      dn_v <- names(d)
-      for(j in grepv('date', dn_v))
-        set(d, j=j, value = as.Date(d[[j]], origin = "1970-01-01"))
-      output_vec <- c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
-      d <- d[, unique(.SD), .SDc = output_vec]
-      return(d)
-    }
-
-  # how to fix if priorities are to be accounted for...
-  test2 <- priority_overlap(overlap_dt = copy(overlap_dt),
-                            group_cols = "person_ID",
-                            priority_col = "team",
-                            priority_value = "priority",
-                            start_col = "start_date",
-                            end_col = "end_date",
-                            overlap_int = 1L,
-                            replace_blanks = Sys.Date())
-
+    setorderv(d, c(CS_v, "fl_pk", GS_v))
+    d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
+    spntf_mnchr_v <- d[, unlist(.(
+      case = max(nchar(case)),
+      ugrp = max(nchar(as.character(gs_i))),
+      ufol = max(nchar(fl_pk))
+    ))]
+    fmt <- paste0("%",
+                  spntf_mnchr_v['case'],
+                  ".0f-%",
+                  spntf_mnchr_v['ugrp'],
+                  ".0f-%",
+                  spntf_mnchr_v['ufol'],
+                  ".0f")
+    d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
+    d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
+    d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
+    dn_v <- names(d)
+    for (j in grepv('date', dn_v))
+      set(d, j = j, value = as.Date(d[[j]], origin = "1970-01-01"))
+    output_vec <-
+      c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
+    d <- d[, unique(.SD), .SDc = output_vec]
+    return(d)
+  }
 }
-
-
-    # figure out which intervals are overlapping with different team priorities
-    # overlap_dt2 <- copy(overlap_dt)
-    # overlap_dt <- copy(overlap_dt2)
 
 # priority column with overlapping date records -------------------------------
 #' @export
@@ -341,7 +229,6 @@ WIP <- if (FALSE) {
 priority_overlap <- function(data,
                              group_cols,
                              priority_col,
-                             priority_value,
                              start_col,
                              end_col,
                              overlap_int = 1L,
@@ -349,7 +236,6 @@ priority_overlap <- function(data,
   # data = copy(data)
   # group_cols = Cs(case_no, cmh_effdt)
   # priority_col = "cmh_team"
-  # priority_value = "priority"
   # start_col = "team_effdt"
   # end_col = "team_expdt"
 
@@ -364,7 +250,6 @@ priority_overlap <- function(data,
   )
   group_cols <- setdiff(group_cols, priority_col)
   setnames(d, priority_col, "p_col")
-  # setnames(d, priority_value, "p_integer")
   d[, p_col := as.int(p_col)]
   stopifnot(d[, class(p_col)] == "integer")
   d[!is.na(end_date), end_col := end_date]
@@ -502,7 +387,6 @@ priority_overlap <- function(data,
   fixed_dt <- rbindlist(list(messy_ovr_dt, split_comb, clean_dt), use.names = TRUE)
   fixed_dt[, end_col := NULL]
   setnames(fixed_dt, old = "p_col", new = priority_col)
-  # setnames(fixed_dt, old = "p_col", new = priority_value)
   setnames(fixed_dt, "start_date", start_col)
   setnames(fixed_dt, "end_date", end_col)
   return(fixed_dt)
