@@ -110,6 +110,6 @@ cmh_teams_f <- function(x,
 #' @rdname team_functions
 #' @export
 cmh_priority_dt <-
-  data.table(team = c("OBRA", "ACT", "DD", "MI", "Child HB", "Child",
+  data.table(team = c("OBRA", "DD", "ACT", "MI", "Child HB", "Child",
                       "PORT", "UM", "Access", "non-CMH"),
              priority = 1:10)
