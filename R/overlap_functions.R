@@ -50,6 +50,44 @@ NULL
 
 # R CMD checker appeasement ---
 
+
+sql_adm <- if (FALSE) {
+  sql <- list(
+    channel = odbcConnect("WSHSQL002"),
+    query = list()
+  )
+  # admissions
+  sql$query$adm <-
+    sprintf(
+      "select distinct
+      adm.case_no, adm.provider_eff as team_eff, adm.provider_exp as team_exp,
+      adm.provider as team, adm.assigned_staff as staff, adm.staff_eff,
+      adm.staff_exp, adm.adm_effdt, adm.adm_expdt
+      from encompass.dbo.tblE2_Adm_Consumers as adm
+      where adm.county = 'Washtenaw' and adm.provider in
+      ('WSH - ACT', 'WSH - ATO' , 'WSH - Children''s Services',
+      'WSH - Children''s Services - Home Based', 'WSH - DD Adult',
+      'WSH - Access/Engagement', 'Washtenaw County Community Mental Health',
+      'Washtenaw County Community Mental Health-External',
+      'WSH - MI - Adult')
+      and adm.providertype = 'Direct Provider'
+      and adm.provider_eff <= '%2$s' and
+      (adm.provider_exp >= '%1$s' or adm.provider_exp is null)",
+      "10/1/2010", "5/30/2016")
+  sql$adm <- sqlQuery(query = sql$query$adm,
+    channel = sql$channel, stringsAsFactors = FALSE)
+  sql$adm <- data.table(sql$adm)
+  adm <- copy(sql$adm)
+  adm[, Cs(staff_eff, staff_exp, staff) := NULL]
+  wccmh::overlap_combine(
+    data = adm, group_cols = Cs(team, adm_effdt, adm_expdt),
+    start_col = "team_eff", end_col = "team_exp", overlap_int = 1L,
+    analysis_date = Sys.Date()
+  )
+}
+
+
+
 index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
   ovr_vec <- xid <- yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <-
   remove_record <- p_col <- i.p_col <- grp_id <- .GRP <- grp_n <-
