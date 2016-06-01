@@ -49,8 +49,6 @@
 NULL
 
 # R CMD checker appeasement ---
-
-
 sql_adm <- if (FALSE) {
   sql <- list(
     channel = odbcConnect("WSHSQL002"),
@@ -102,11 +100,17 @@ overlap_combine <-
     d <- copy(data)
     if (any(names(d) == "end_col")) {
       d[, end_col := NULL]
-      p_warn("You had a column labeled end_col which conflicts with
-             overlap_comb. It was deleted and re-created based on the end_col
-             parameter.")
+      p_stop("You had a column labeled end_col which conflicts with
+             overlap_comb.")
     }
-    d[, end_col := get(end_col) + overlap_int]
+    d[, end_col := get(end_col)]
+    if (d[, class(end_col)]) {
+      p_warn("end_col was not supplied as a Date; as.Date was applied but please
+             submit end_col as Date class to avoid potential Date conversion
+             errors.")
+      d[, end_col := as.Date(end_col)]
+    }
+    d[, end_col := end_col + overlap_int]
     # sd_cols <- c(start_col, "end_col")
     d[is.na(end_col), end_col := analysis_date]
     # note: if end_col becomes < start_col due to overlap_int,
@@ -160,6 +164,8 @@ overlap_combine <-
     }
     d[, Cs(index) := NULL]
     d <- unique(d)
+    setnames(d, "start_date", start_col)
+    setnames(d, "end_date", end_col)
     return(d)
     }
 
