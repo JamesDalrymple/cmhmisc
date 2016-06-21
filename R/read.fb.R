@@ -19,8 +19,9 @@
 #' lapply(my_fb_dt, class)
 #' attributes(my_fb_dt)
 #' }
-#' @importFrom EMiscDev p_stop %nin%
+#' @importFrom EmiscDev p_stop %nin%
 #' @importFrom data.table data.table last := .SD fread
+#' @importFrom utils read.table
 
 #' @name read.fb
 NULL
@@ -85,11 +86,11 @@ char_cols <-
 read_header <- function(file_path) {
   s <- 0
   DT_header <-
-    read.table(file = file_path, header = FALSE,
+    utils::read.table(file = file_path, header = FALSE,
                sep = ",", skip = s, nrows = 1)
   repeat {
     s <- s + 1
-    add_line <- read.table(file = file_path, header = FALSE,
+    add_line <- utils::read.table(file = file_path, header = FALSE,
                            sep = ",", skip = s, nrows = 1)
     if (sum(is.na(add_line)) == length(add_line)) break
     DT_header <- rbind(DT_header, add_line)

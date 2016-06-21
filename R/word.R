@@ -14,7 +14,7 @@
 #' @importFrom data.table data.table := setkey .I
 # #' @importClassesFrom english english
 # #' @importFrom english
-#' @importFrom EMiscDev as.chr
+#' @importFrom EmiscDev as.chr
 #' @name word
 NULL
 

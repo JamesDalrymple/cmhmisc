@@ -20,7 +20,7 @@
 #' @note Other functions for money will go in this file.
 #'
 #' @importFrom data.table data.table :=
-#' @importFrom EMiscDev as.num as.int
+#' @importFrom EmiscDev as.num as.int
 #' @name money
 NULL
 #' @export

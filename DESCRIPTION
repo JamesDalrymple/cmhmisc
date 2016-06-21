@@ -1,4 +1,4 @@
-Package: cmh_misc
+Package: cmhmisc
 Version: 0.1.0
 Title: Washtenaw County CMH Misc
 Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role =
@@ -8,8 +8,8 @@ Description: Convenience functions and R objects to speed code writing at WCCMH.
 Depends:
     R (>= 3.3.1),
     data.table (>= 1.9.6),
-    EMiscDev,
     Hmisc,
+    EmiscDev,
     zoo,
 Imports:
     english

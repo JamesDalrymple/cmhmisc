@@ -29,7 +29,7 @@
 #' date_convert(x)
 #' date_convert(x = as.Date("2014-10-1"))
 #' date_expansion(start_date = "10/1/2014", end_date = "9/30/2015")
-#' @importFrom EMiscDev as.chr
+#' @importFrom EmiscDev as.chr
 #' @importFrom data.table data.table := rbindlist copy
 #' @importFrom zoo as.yearqtr as.yearmon
 #'
