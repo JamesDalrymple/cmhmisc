@@ -1,11 +1,11 @@
 Package: cmh_misc
 Type: Package
-Title: Washtenaw County CMH repo
+Title: Washtenaw County CMH Misc
 Version: 0.1.0
 Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role =
     c("aut", "cre"))
 Maintainer: J Dalrymple <dalrymplej@ewashtenaw.org>
-Description: Convenience functions to speed code writing at WCCMH.
+Description: Convenience functions and R objects to speed code writing at WCCMH.
 Depends:
     R (>= 3.2.4),
     data.table (>= 1.9.6),
