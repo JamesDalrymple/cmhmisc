@@ -14,7 +14,7 @@
 #' @importFrom data.table data.table := setkey .I
 # #' @importClassesFrom english english
 # #' @importFrom english
-#' @importFrom EquaPac as.chr
+#' @importFrom EMiscDev as.chr
 #' @name word
 NULL
 

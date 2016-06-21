@@ -26,7 +26,7 @@
 #' @examples
 #' cmh_recode("WSH - ACT")
 #' cmh_recode(c("WSH - ACT", "DD Adult"))
-#' @importFrom EquaPac recode_string as.chr
+#' @importFrom EMiscDev recode_string as.chr
 #' @importFrom data.table data.table :=
 #'
 #' @name team_functions

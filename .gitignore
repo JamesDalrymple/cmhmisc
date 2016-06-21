@@ -16,3 +16,4 @@ vignettes/*.pdf
 *.RData
 *.RData
 .RData
+.Rproj.user

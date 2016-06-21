@@ -10,7 +10,7 @@
 #'
 #' @examples
 #' recode_hosp(c("Hawthorn Center -State Facility", "Kalamazoo Psych"))
-#' @importFrom EquaPac recode_string
+#' @importFrom EmiscDev recode_string
 #'
 #' @name hosp_functions
 NULL

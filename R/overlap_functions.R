@@ -44,7 +44,7 @@
 #' @import data.table
 #' @importFrom car recode
 #' @importFrom Hmisc Cs
-#' @importFrom EquaPac p_warn grepv d.t
+#' @importFrom EMiscDev p_warn grepv d.t
 #' @name overlap_functions
 NULL
 
