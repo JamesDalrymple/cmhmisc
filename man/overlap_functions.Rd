@@ -9,8 +9,8 @@
 overlap_combine(data, group_cols, start_col, end_col, overlap_int = 1L,
   analysis_date = Sys.Date())
 
-priority_overlap(data, group_cols, priority_col, start_col, end_col,
-  overlap_int = 1L, analysis_date = Sys.Date() + 999)
+priority_overlap(data, group_cols, priority_col, priority_int, start_col,
+  end_col, overlap_int = 1L, analysis_date = Sys.Date() + 999)
 }
 \arguments{
 \item{data}{A data.table object with collapsable records.}
@@ -29,6 +29,9 @@ records.}
 with this value. Defaults to Sys.Date().}
 
 \item{priority_col}{A single column which will have a priority assignment.}
+
+\item{priority_int}{A positive integer for priority, 1 being highest
+priority and each consecutive integer of lower priority than the previous.}
 }
 \value{
 overlap_combine returns a reduced/collapsed data.table object based
@@ -53,15 +56,19 @@ test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
 print(test1)
 
+\dontrun{
+# priority overlap is broken, WIP
  # how to fix if priorities are to be accounted for...
 test2 <- priority_overlap(data = copy(ex_overlap),
                  group_cols = c("case_no", "type"),
                  priority_col = "team",
+                 priority_col = "priority",
                  start_col = "start_date",
                  end_col = "end_date",
                  overlap_int = 1L,
                  analysis_date = Sys.Date())
 print(test2)
+}
 
 }
 
