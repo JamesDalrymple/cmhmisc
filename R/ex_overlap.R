@@ -13,7 +13,6 @@
 #' data(ex_overlap)
 #' rm("ex_overlap")
 #' ex_overlap
-#' # wccmh::ex_overlap
 #' }
 #' @name ex_overlap
 NULL

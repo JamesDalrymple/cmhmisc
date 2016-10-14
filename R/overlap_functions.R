@@ -5,7 +5,6 @@
 #' an overlap outside of the unique grouping but within the priority column.
 #'
 #' @param data A data.table object with collapsable records.
-# param case_col the case_no or main field distiguisher.
 #' @param group_cols A group of columns which will collectively make a key on
 #' which to group by when reducing/collapsing the data.table object.
 #' @param priority_col A single column which will have a priority assignment.
@@ -27,29 +26,13 @@
 #' been warned! MAJOR rewrite coming eventually... hopefully backward compatible
 #'
 #' @examples
-#' # how to fix if priorities are not to be accounted for...
-#' test1 <- overlap_combine(data = copy(ex_overlap), group_cols = c("case_no",
-#' "team"), start_col = "start_date", end_col = "end_date",
-#'  overlap_int = 1L, analysis_date = Sys.Date() + 1e3)
-#' print(test1)
-#'
-#'\dontrun{
-#' # priority overlap is broken, WIP
-#'  # how to fix if priorities are to be accounted for...
-#' test2 <- priority_overlap(data = copy(ex_overlap),
-#'                  group_cols = c("case_no", "type"),
-#'                  priority_col = "team",
-#'                  priority_col = "priority",
-#'                  start_col = "start_date",
-#'                  end_col = "end_date",
-#'                  overlap_int = 1L,
-#'                  analysis_date = Sys.Date())
-#' print(test2)
-#' }
-#'
+#' data(ex_overlap)
+#' suppressWarnings(overlap_combine(data = ex_overlap, group_cols = Cs(team, priority),
+#'  start_col = Cs(team_start), end_col = Cs(team_end)) %>% print)
 #' @import data.table
 #' @importFrom Hmisc Cs
 #' @importFrom EmiscDev p_warn grepv d.t
+#' @import magrittr
 #' @name overlap_functions
 NULL
 
@@ -95,8 +78,17 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
   ovr_vec <- xid <- yid <- i.priority <- ovr_pairs <- i.end_date <- i.team <-
   remove_record <- p_col <- i.p_col <- grp_id <- .GRP <- grp_n <-
   add_record <- new_index <- p_int <- i.p_int <- NULL
+# hh_nurse <- copy(sql$output$hh_nurse)
+# data <- hh_nurse
+# group_cols <- Cs(hh_nurse)
+# start_col = "hhnurse_effdt"
+# end_col = "hhnurse_expdt"
+# x_dt <- overlap_combine(data = hh_nurse, group_cols = Cs(hh_nurse),
+#   start_col = Cs(hhnurse_effdt), end_col = Cs(hhnurse_expdt),
+#   overlap_int = 14, analysis_date = Sys.Date())
 
-# older version (outdated 4/2/2016) -------------------------------------------
+# please use WIP2, which needs to be tested, at some point --------------------
+# last corrected 9/15/2016
 #' @export
 #' @rdname overlap_functions
 overlap_combine <-
@@ -105,29 +97,36 @@ overlap_combine <-
     d <- copy(data)
     if (any(names(d) == "end_col")) {
       d[, end_col := NULL]
-      p_stop("You had a column labeled end_col which conflicts with
-             overlap_comb.")
+      stop("You had a column labeled end_col which conflicts with overlap_comb.")
     }
-    d[, end_col := get(end_col)]
-    if (d[, class(end_col)] != "Date") {
-      p_warn("end_col was not supplied as a Date; as.Date was applied but please
+    if (any(names(d) %in% Cs(start_date, end_date))) {
+      stop("One or more columns were named 'start_date', 'end_col' or 'end_date'.")
+    }
+    setnames(d, start_col, "start_date")
+    setnames(d, end_col, "end_date")
+    d[, end_col := end_date]
+    # d[, end_col := get(end_col)]
+    if (d[, end_date] %>% class %>% equals("Date") %>% not) {
+      warning("end_col was not supplied as a Date; as.Date was applied but please
              submit end_col as Date class to avoid potential Date conversion
              errors.")
       d[, end_col := as.Date(end_col)]
+    }
+    if (d[, start_date] %>% class %>% equals("Date") %>% not) {
+      d[, start_date := as.Date(start_date)]
     }
     d[, end_col := end_col + overlap_int]
     # sd_cols <- c(start_col, "end_col")
     d[is.na(end_col), end_col := analysis_date]
     # note: if end_col becomes < start_col due to overlap_int,
     # we assign end_col <- start_col
-    if (nrow(d[end_col - get(start_col) < 0]) > 0) {
-      d[end_col - get(start_col) < 0, c("end_col", end_col)
-        := get(start_col)]
-      p_warn("you had start_col and end_col out of order")
+    if (nrow(d[end_col - start_date < 0]) > 0) {
+      d[end_col - start_date < 0, Cs(end_col, end_date)
+        := list(start_date, start_date)]
+      warning("you had start_col and end_col out of order")
     }
     d[, index := .I]
-    setnames(d, start_col, "start_date")
-    setnames(d, end_col, "end_date")
+
     # finding overlapping combinations via vectors of indices ---
     c_overlap <-
       d[d[, unique(.SD), .SDcols =
@@ -168,7 +167,7 @@ overlap_combine <-
       }
     }
     d[, Cs(index) := NULL]
-    d <- unique(d)
+    d %<>% unique
     setnames(d, "start_date", start_col)
     setnames(d, "end_date", end_col)
     d[, end_col := NULL]

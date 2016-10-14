@@ -20,7 +20,6 @@ problems to be fixed by overlap functions.
 data(ex_overlap)
 rm("ex_overlap")
 ex_overlap
-# wccmh::ex_overlap
 }
 }
 \keyword{datasets}

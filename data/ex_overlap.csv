@@ -1,4 +1,4 @@
-type,case_no,team,start_date,end_date,priority
+type,case_no,team,team_start,team_end,priority
 case 1,1012,A,12/20/2014,3/21/2015,1
 case 1,1012,B,8/5/2013,9/25/2015,2
 case 2,2013,B,12/21/2014,4/19/2015,2

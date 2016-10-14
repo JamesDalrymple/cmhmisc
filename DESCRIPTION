@@ -8,6 +8,7 @@ Description: Convenience functions and R objects to speed code writing at WCCMH.
 Depends:
     R (>= 3.3.1),
     data.table (>= 1.9.6),
+	  magrittr,
     Hmisc,
     EmiscDev,
     zoo,
