@@ -51,7 +51,6 @@ been warned! MAJOR rewrite coming eventually... hopefully backward compatible
 }
 \examples{
 data(ex_overlap)
-print(ex_overlap)
 suppressWarnings(overlap_combine(data = ex_overlap, group_cols = Cs(team, priority),
  start_col = Cs(team_start), end_col = Cs(team_end)) \%>\% print)
 }
