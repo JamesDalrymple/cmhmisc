@@ -28,7 +28,7 @@ DROP FUNCTION dbo.fn_jd_get_months
 DROP FUNCTION dbo.fn_jd_cat_time
 -----------------------------------------------------------------------------*/
 
--- create database jd_utility
+-- create database jd_utility -- 1/12/2017
 
 use jd_utility
 go
@@ -37,16 +37,18 @@ IF OBJECT_ID ('dbo.fn_jd_get_fy_aux_char') IS NOT NULL
     DROP FUNCTION dbo.fn_jd_get_fy_aux_char
 go
 create FUNCTION dbo.fn_jd_get_fy_aux_char(@start_date date)
- /* James, 1/4/17, 12/22/16, 1/7/14, 1/6/15
+ /* 1/4/17, 12/22/16, 1/7/14, 1/6/15 James
 	Helper function for fn_jd_get_fys, old name: dbo.fn_FiscalYear*/
 RETURNS varchar(8)
 AS
 BEGIN
 	DECLARE @Answer varchar(8)
 	IF (MONTH(@start_date) < 10)
-		SET @Answer = 'FY' + substring(cast(YEAR(@start_date) as varchar(8)), 3, 2)
+		SET @Answer = 'FY' + substring(cast(YEAR(@start_date) 
+		as varchar(8)), 3, 2)
 	ELSE
-		SET @Answer = 'FY' + substring(cast(YEAR(@start_date)+1 as varchar(8)), 3, 2)
+		SET @Answer = 'FY' + substring(cast(YEAR(@start_date) + 1 
+		as varchar(8)), 3, 2)
 	RETURN @Answer
 END
 GO
@@ -61,7 +63,7 @@ IF OBJECT_ID ('dbo.fn_jd_get_fy_aux_num') IS NOT NULL
     DROP FUNCTION dbo.fn_jd_get_fy_aux_num
 go
 create FUNCTION dbo.fn_jd_get_fy_aux_num(@start_date date)
-/* James, 1/4/17, 12/22/16, 1/7/14, 1/6/15
+/* 1/4/17, 12/22/16, 1/7/14, 1/6/15 James
 	Helper function for fn_jd_get_fys, old name: dbo.fn_FiscalYear*/
 RETURNS int
 AS
@@ -90,21 +92,31 @@ AS  /* 1/4/17, 12/22/16, 1/7/15, 1/6/15, James
 BEGIN
 	DECLARE @Answer varchar(9)
 	IF (MONTH(@start_date) between 10 and 12)
-		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date)+1 as nvarchar(4)), 3, 4) + ' Q1'
+		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date) + 
+		1 as nvarchar(4)), 3, 4) + ' Q1'
 	IF (MONTH(@start_date) between 1 and 3)
-		SET @Answer = 'FY' +  SUBSTRING( cast(YEAR(@start_date) as nvarchar(4)), 3, 4) + ' Q2'
+		SET @Answer = 'FY' +  SUBSTRING( cast(YEAR(@start_date) 
+		as nvarchar(4)), 3, 4) + ' Q2'
 	IF (MONTH(@start_date) between 4 and 6)
-		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date) as nvarchar(4)), 3, 4) + ' Q3'
+		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date) 
+		as nvarchar(4)), 3, 4) + ' Q3'
 	IF (MONTH(@start_date) between 7 and 9)
-		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date) as nvarchar(4)), 3, 4) + ' Q4'	
+		SET @Answer = 'FY' + SUBSTRING( cast(YEAR(@start_date) 
+		as nvarchar(4)), 3, 4) + ' Q4'	
 	RETURN @Answer
 END
 GO
 /* example --------------------------------------------------------------------
-select dbo.fn_jd_get_quarter_aux0('10/1/2015'), dbo.fn_jd_get_quarter_aux0('1/1/2016'),
-dbo.fn_jd_get_quarter_aux0('4/1/2016'), dbo.fn_jd_get_quarter_aux0('7/1/2016')
-select dbo.fn_jd_get_quarter_aux0('10/1/2016'), dbo.fn_jd_get_quarter_aux0('1/1/2017'),
-dbo.fn_jd_get_quarter_aux0('4/1/2017'), dbo.fn_jd_get_quarter_aux0('7/1/2017')
+select 
+	dbo.fn_jd_get_quarter_aux0('10/1/2015'), 
+	dbo.fn_jd_get_quarter_aux0('1/1/2016'),
+	dbo.fn_jd_get_quarter_aux0('4/1/2016'), 
+	dbo.fn_jd_get_quarter_aux0('7/1/2016')
+select 
+	dbo.fn_jd_get_quarter_aux0('10/1/2016'), 
+	dbo.fn_jd_get_quarter_aux0('1/1/2017'),
+	dbo.fn_jd_get_quarter_aux0('4/1/2017'), 
+	dbo.fn_jd_get_quarter_aux0('7/1/2017')
 -----------------------------------------------------------------------------*/
 
 IF OBJECT_ID ('dbo.fn_jd_get_month_aux0') IS NOT NULL  
@@ -112,23 +124,32 @@ IF OBJECT_ID ('dbo.fn_jd_get_month_aux0') IS NOT NULL
 go
 CREATE FUNCTION dbo.fn_jd_get_month_aux0(@start_date date)
 RETURNS varchar(8)
-AS /* 1/4/17,  2/26/15 */
+AS /* 1/4/17,  2/26/15 James */
 BEGIN
 	DECLARE @Answer varchar(8)
-		set @Answer = substring(datename(month, @start_date), 1, 3) + ' ' + cast(datepart(year, @start_date) as nvarchar(4))
-		-- SET @Answer = SUBSTRING(DateName(month, DateAdd( month,  month(@start_date) , -1 ) ), 1, 3)+ ' '+ cast(YEAR(@start_date) as nvarchar(4))
+		set @Answer = substring(datename(month, @start_date), 1, 3) + 
+		' ' + cast(datepart(year, @start_date) as nvarchar(4))
 	RETURN @Answer
 END
 GO
 /* example --------------------------------------------------------------------
-select dbo.fn_jd_get_month_aux0('10/1/2015'), dbo.fn_jd_get_month_aux0('11/1/2015'),
-dbo.fn_jd_get_month_aux0('12/1/2015'), dbo.fn_jd_get_month_aux0('1/1/2016'),
-dbo.fn_jd_get_month_aux0('2/1/2016'), dbo.fn_jd_get_month_aux0('3/1/2016'),
-dbo.fn_jd_get_month_aux0('4/1/2016'), dbo.fn_jd_get_month_aux0('5/1/2016'),
-dbo.fn_jd_get_month_aux0('6/1/2016'), dbo.fn_jd_get_month_aux0('7/1/2016'),
-dbo.fn_jd_get_month_aux0('8/1/2016'), dbo.fn_jd_get_month_aux0('9/1/2016'),
-dbo.fn_jd_get_month_aux0('10/1/2016'), dbo.fn_jd_get_month_aux0('11/1/2016'),
-dbo.fn_jd_get_month_aux0('12/1/2016'), dbo.fn_jd_get_month_aux0('1/1/2017')
+select 
+	dbo.fn_jd_get_month_aux0('10/1/2015'), 
+	dbo.fn_jd_get_month_aux0('11/1/2015'),
+	dbo.fn_jd_get_month_aux0('12/1/2015'), 
+	dbo.fn_jd_get_month_aux0('1/1/2016'),
+	dbo.fn_jd_get_month_aux0('2/1/2016'), 
+	dbo.fn_jd_get_month_aux0('3/1/2016'),
+	dbo.fn_jd_get_month_aux0('4/1/2016'), 
+	dbo.fn_jd_get_month_aux0('5/1/2016'),
+	dbo.fn_jd_get_month_aux0('6/1/2016'), 
+	dbo.fn_jd_get_month_aux0('7/1/2016'),
+	dbo.fn_jd_get_month_aux0('8/1/2016'), 
+	dbo.fn_jd_get_month_aux0('9/1/2016'),
+	dbo.fn_jd_get_month_aux0('10/1/2016'), 
+	dbo.fn_jd_get_month_aux0('11/1/2016'),
+	dbo.fn_jd_get_month_aux0('12/1/2016'), 
+	dbo.fn_jd_get_month_aux0('1/1/2017')
 -----------------------------------------------------------------------------*/
 
 IF OBJECT_ID ('dbo.fn_jd_get_fys') IS NOT NULL  
@@ -176,12 +197,13 @@ go
 CREATE function dbo.fn_jd_get_quarters(@startdate datetime, @enddate datetime)
 returns table
 as return /* James 1/11/17, 1/4/17, 12/23/16			
-			old name: Fn_All_Quarters -- 6/22/15, Snow, 2/23/2015, 2/19/2015, 2/18/2015, James */
+			old name: Fn_All_Quarters -- 6/22/15, Snow, 2/23/2015, 2/19/2015, 
+			2/18/2015, James */
 WITH qtr_data as
 (   select
 		dateadd(qq, datediff(qq, 0, @startdate), 0) as t_start,
-		dateadd(dd, -1, dateadd(qq, datediff(qq, 0, @startdate) +1, 0)) as t_end,
-		@startdate as startdate, @enddate as enddate
+		dateadd(dd, -1, dateadd(qq, datediff(qq, 0, @startdate) +1, 0)) 
+		as t_end, @startdate as startdate, @enddate as enddate
     UNION ALL
     SELECT
 		dateadd(month, 3, t_start) as t_start,
@@ -202,16 +224,16 @@ select
 	then enddate else t_end end as end_adj 
 from qtr_data
 go
-/* example ------------------------------------------------
+/* example --------------------------------------------------------------------
 select * from dbo.fn_jd_get_quarters('10/1/2010', '12/21/2017')
 select * from dbo.fn_jd_get_quarters('7/14/2015', '12/12/2016')
-----------------------------------------------------------*/
+-----------------------------------------------------------------------------*/
 
 IF object_id('dbo.fn_jd_get_months') IS NOT NULL 
 		DROP FUNCTION dbo.fn_jd_get_months
 go
 create function dbo.fn_jd_get_months(@startdate datetime, @enddate datetime)
-returns table as return /* James 1/11/17, 12/23/16 */
+returns table as return /* 1/11/17, 12/23/16 James */
 WITH mon_data AS
 (    SELECT
 		dateadd(mm, datediff(mm, 0, @startdate), 0) as t_start, 
@@ -250,7 +272,7 @@ go
 create function dbo.fn_jd_cat_time(@startdate datetime, @enddate datetime)
 returns table
 as return /* 1/11/17, 1/4/17, 12/23/2016, James 
-			Convenience function combining calendar_month, qtr, fy 'get' functions. */
+		  utility fn combining calendar_mon, qtr, fy 'get' functions. */
 WITH cat_data as
 (
 	select fy.FY_num as fy_num, fy.FY_char as time_cat, fy.t_start, fy.t_end, 
