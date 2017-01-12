@@ -12,8 +12,8 @@ Fn_All_FY (Procedures: E2_CMH_active_Count_by_FY,
 /*  DROP ALL JD functions -----------------------------------------------------
 
 SELECT name, definition, type_desc 
-  FROM convenience_jd.sys.sql_modules m 
-INNER JOIN convenience_jd.sys.objects o 
+  FROM jd_utility.sys.sql_modules m 
+INNER JOIN jd_utility.sys.objects o 
         ON m.object_id=o.object_id
 WHERE type_desc like '%function%' and
 name like 'fn_jd%'
@@ -28,9 +28,9 @@ DROP FUNCTION dbo.fn_jd_get_months
 DROP FUNCTION dbo.fn_jd_cat_time
 -----------------------------------------------------------------------------*/
 
--- create database convenience_jd
+-- create database jd_utility
 
-use convenience_jd
+use jd_utility
 go
 
 IF OBJECT_ID ('dbo.fn_jd_get_fy_aux_char') IS NOT NULL  

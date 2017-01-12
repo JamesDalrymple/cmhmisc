@@ -1,4 +1,4 @@
-use convenience_jd
+use jd_utility
 go
 
 /* Goal: create a 'historical' secondary team function that James can use to satisfy data
@@ -16,15 +16,15 @@ ATO (re-assigned to 'MI Adult')
 Access/Engagement and/or WCCMH are re-assigned to 'Access'
 */
 
-IF OBJECT_ID('convenience_jd.dbo.tbl_jd_team_priority') IS NOT NULL
-	DROP TABLE convenience_jd.dbo.tbl_jd_team_priority
-create table convenience_jd.dbo.tbl_jd_team_priority -- 1/3/2017 James
+IF OBJECT_ID('jd_utility.dbo.tbl_jd_team_priority') IS NOT NULL
+	DROP TABLE jd_utility.dbo.tbl_jd_team_priority
+create table jd_utility.dbo.tbl_jd_team_priority -- 1/3/2017 James
 (org_sec_team nvarchar(64), -- original secondary team
  adj_sec_team nvarchar(32), -- adjusted team
  sec_team_priority int -- team priority
 )
 go
-INSERT INTO convenience_jd.dbo.tbl_jd_team_priority
+INSERT INTO jd_utility.dbo.tbl_jd_team_priority
   (org_sec_team, adj_sec_team, sec_team_priority)
 select distinct cmh.team2 as org_sec_team, 
 	case when cmh.team2 = 'WSH - Utilization Management' then 'UM'
@@ -84,9 +84,9 @@ as return( -- 1/5/17, 1/3/17 James
 		cmh.gender, cmh.dob,
 		cmh.assigned_staff as staff, cmh.supervisor
 	from encompass.dbo.tblE2_CMH_Adm_Consumers_w_OBRA cmh
-	join convenience_jd.dbo.tbl_jd_team_priority as t 
+	join jd_utility.dbo.tbl_jd_team_priority as t 
 		on t.org_sec_team = cmh.team2
-	join convenience_jd.dbo.tbl_jd_team_priority as t2 on t2.org_sec_team = cmh.team
+	join jd_utility.dbo.tbl_jd_team_priority as t2 on t2.org_sec_team = cmh.team
 	where cmh.case_no = @case_no and @date between cmh.team_effdt and 
 		Isnull(cmh.team_expdt, GETDATE()) and cmh.county = 'Washtenaw'
 ) 
