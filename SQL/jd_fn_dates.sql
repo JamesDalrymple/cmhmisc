@@ -33,6 +33,8 @@ DROP FUNCTION dbo.fn_jd_cat_time
 use jd_utility
 go
 
+-- use E2_funding_bucket
+
 IF OBJECT_ID ('dbo.fn_jd_get_fy_aux_char') IS NOT NULL  
     DROP FUNCTION dbo.fn_jd_get_fy_aux_char
 go
