@@ -16,5 +16,8 @@ NULL
 cmh_colors <- list(
   # utilization management colors ----
   um = c("#94B6D2", "#DD8047", "#EBDDC3", "#775F55", "#B6C999")
+  # PI colors --- to-do
+  # Health Home colors --- to-do
+  # WCCMH colors --- to-do
 )
 

@@ -2,13 +2,13 @@
 % Please edit documentation in R/team_functions.R
 \docType{data}
 \name{team_functions}
-\alias{cmh_priority_dt}
+\alias{team_functions}
+\alias{cmh_team_key}
 \alias{cmh_program_key}
 \alias{cmh_recode}
-\alias{cmh_team_key}
-\alias{cmh_teams_f}
 \alias{recode_team_prog}
-\alias{team_functions}
+\alias{cmh_teams_f}
+\alias{cmh_priority_dt}
 \title{WCCMH team functions}
 \format{An object of class \code{list} of length 10.}
 \usage{
@@ -60,4 +60,3 @@ cmh_recode("WSH - ACT")
 cmh_recode(c("WSH - ACT", "DD Adult"))
 }
 \keyword{datasets}
-

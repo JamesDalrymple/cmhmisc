@@ -2,9 +2,9 @@
 % Please edit documentation in R/fb_data.R
 \docType{data}
 \name{fb_data}
-\alias{fb_cpt_mod_cost}
 \alias{fb_data}
 \alias{fb_unit_type}
+\alias{fb_cpt_mod_cost}
 \title{Funding Bucket Data}
 \format{A data.table object.}
 \source{
@@ -34,4 +34,3 @@ wccmh::fb_cpt_mod_cost
 }
 }
 \keyword{datasets}
-

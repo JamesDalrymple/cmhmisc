@@ -19,7 +19,7 @@
 #' lapply(my_fb_dt, class)
 #' attributes(my_fb_dt)
 #' }
-#' @importFrom EmiscDev p_stop %nin%
+#' @importFrom TBmisc p_stop %nin%
 #' @importFrom data.table data.table last := .SD fread
 #' @importFrom utils read.table
 

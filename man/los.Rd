@@ -3,6 +3,7 @@
 \docType{data}
 \name{los}
 \alias{los}
+\alias{los}
 \alias{los_clinic}
 \title{Length of Stay}
 \format{An object of class \code{NULL} of length 0.}
@@ -43,4 +44,3 @@ Also consider making some methods (this needs further consideration).
 }
 }
 \keyword{datasets}
-

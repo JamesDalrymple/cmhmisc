@@ -37,4 +37,3 @@ Also consider making some methods (this needs further consideration).
 my_fy("10/1/2014")
 my_qtr("9/30/2015")
 }
-

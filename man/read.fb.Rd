@@ -2,9 +2,10 @@
 % Please edit documentation in R/read.fb.R
 \docType{data}
 \name{read.fb}
-\alias{char_cols}
 \alias{read.fb}
+\alias{char_cols}
 \alias{read_header}
+\alias{read.fb}
 \title{FB file reader}
 \format{An object of class \code{list} of length 52.}
 \usage{
@@ -41,4 +42,3 @@ attributes(my_fb_dt)
 }
 }
 \keyword{datasets}
-

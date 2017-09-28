@@ -25,6 +25,6 @@ consumers are staying long-term to a standardized format.
 }
 \examples{
 recode_hosp(c("Hawthorn Center -State Facility", "Kalamazoo Psych"))
+
 }
 \keyword{datasets}
-

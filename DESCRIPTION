@@ -1,20 +1,17 @@
 Package: cmhmisc
-Version: 0.1.0
+Version: 0.2.0
 Title: Washtenaw County CMH Misc
 Author: person("James", "Dalrymple", email = "dalrymplej@ewashtenaw.org", role =
     c("aut", "cre"))
 Maintainer: J Dalrymple <dalrymplej@ewashtenaw.org>
 Description: Convenience functions and R objects to speed code writing at WCCMH.
 Depends:
-    R (>= 3.3.1),
-    data.table (>= 1.9.6),
-	  magrittr,
-    Hmisc,
-    EmiscDev,
-    zoo,
+    R (>= 3.4.1),
+    data.table,
+    TBmisc
 Imports:
-    english
+    english, magrittr, zoo, Hmisc, pacman
 License: MIT + file LICENSE
 LazyData: true
 ByteCompile: TRUE
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1.9000

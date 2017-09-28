@@ -3,8 +3,8 @@
 \docType{data}
 \name{fund_functions}
 \alias{fund_functions}
-\alias{recode_fund}
 \alias{recode_fund_key}
+\alias{recode_fund}
 \title{WCCMH fund functions}
 \format{An object of class \code{list} of length 7.}
 \usage{
@@ -32,4 +32,3 @@ recode_fund(c("MIChild", "Medicaid"))
 
 }
 \keyword{datasets}
-

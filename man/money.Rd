@@ -2,8 +2,8 @@
 % Please edit documentation in R/money.R
 \name{money}
 \alias{money}
-\alias{money_add}
 \alias{money_rm}
+\alias{money_add}
 \title{Money Functions}
 \usage{
 money_rm(x)
@@ -35,4 +35,3 @@ money_string <- c("$1.04", "$2.24", "$2,000", "$235,658")
 money_add(no_money_string)
 money_add(x = c(1.04, 2.56e6, 3.545e9, -1.678e14))
 }
-

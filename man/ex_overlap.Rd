@@ -3,6 +3,7 @@
 \docType{data}
 \name{ex_overlap}
 \alias{ex_overlap}
+\alias{ex_overlap}
 \title{Overlap Example Dataset}
 \format{A data.table object.}
 \source{
@@ -23,4 +24,3 @@ ex_overlap
 }
 }
 \keyword{datasets}
-

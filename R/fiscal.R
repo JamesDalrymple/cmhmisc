@@ -28,13 +28,13 @@ NULL
 # function for creating a fiscal year from month (date class) ----
 my_fy <- function(x, format = NULL, fy_start = "Oct") {
   qtr_add <-
-    as.num(zoo::as.yearqtr(as.yearmon(paste("Jan", 2011)))) -
-    as.num(zoo::as.yearqtr(as.yearmon(paste(fy_start, 2010))))
+    as.num(as.yearqtr(as.yearmon(paste("Jan", 2011)))) -
+    as.num(as.yearqtr(as.yearmon(paste(fy_start, 2010))))
 
   if (class(x) != "Date" ) {
     x <- date_convert(x, format = format)
   }
-  quarter <- zoo::as.yearqtr(x) + qtr_add
+  quarter <- as.yearqtr(x) + qtr_add
   year <- as.character(substr(quarter, 1, 4))
   return(year)
 }
@@ -46,9 +46,9 @@ my_qtr <- function(x, format = NULL, fy_start = "Oct") {
     x <- date_convert(x, format = format)
   }
   qtr_add <-
-    as.num(zoo::as.yearqtr(zoo::as.yearmon(paste("Jan", 2011)))) -
-    as.num(zoo::as.yearqtr(zoo::as.yearmon(paste(fy_start, 2010))))
-  quarter <- zoo::as.yearqtr(x) + qtr_add
+    as.num(as.yearqtr(as.yearmon(paste("Jan", 2011)))) -
+    as.num(as.yearqtr(as.yearmon(paste(fy_start, 2010))))
+  quarter <- as.yearqtr(x) + qtr_add
   quarter <- as.character(quarter)
   return(quarter)
 }

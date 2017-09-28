@@ -26,7 +26,7 @@ NULL
 #' Also consider making some methods (this needs further consideration).
 #'
 #' @importFrom data.table data.table :=
-#' @importFrom EmiscDev as.num
+#' @importFrom TBmisc as.num
 
 los <- NULL # RMD checker appeasement
 #' @export

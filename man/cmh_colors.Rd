@@ -3,6 +3,7 @@
 \docType{data}
 \name{cmh_colors}
 \alias{cmh_colors}
+\alias{cmh_colors}
 \title{WCCMH colors}
 \format{An object of class \code{list} of length 1.}
 \usage{
@@ -23,4 +24,3 @@ cmh_colors$um_colors
 
 }
 \keyword{datasets}
-
