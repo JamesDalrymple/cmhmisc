@@ -36,40 +36,46 @@
 NULL
 
 
-# sql_adm <- if (FALSE) {
-#   sql <- list(
-#     channel = odbcConnect("WSHSQL002"),
-#     query = list()
-#   )
-#   # admissions
-#   sql$query$adm <-
-#     sprintf(
-#       "select distinct
-#       adm.case_no, adm.provider_eff as team_eff, adm.provider_exp as team_exp,
-#       adm.provider as team, adm.assigned_staff as staff, adm.staff_eff,
-#       adm.staff_exp, adm.adm_effdt, adm.adm_expdt
-#       from encompass.dbo.tblE2_Adm_Consumers as adm
-#       where adm.county = 'Washtenaw' and adm.provider in
-#       ('WSH - ACT', 'WSH - ATO' , 'WSH - Children''s Services',
-#       'WSH - Children''s Services - Home Based', 'WSH - DD Adult',
-#       'WSH - Access/Engagement', 'Washtenaw County Community Mental Health',
-#       'Washtenaw County Community Mental Health-External',
-#       'WSH - MI - Adult')
-#       and adm.providertype = 'Direct Provider'
-#       and adm.provider_eff <= '%2$s' and
-#       (adm.provider_exp >= '%1$s' or adm.provider_exp is null)",
-#       "10/1/2010", "9/30/2017")
-#   sql$adm <- sqlQuery(query = sql$query$adm,
-#     channel = sql$channel, stringsAsFactors = FALSE)
-#   sql$adm <- data.table(sql$adm)
-#   adm <- copy(sql$adm)
-#   adm[, Cc(staff_eff, staff_exp, staff) := NULL]
-#   cmhmisc::overlap_combine(
-#     data = adm, group_cols = Cc(team, adm_effdt, adm_expdt),
-#     start_col = "team_eff", end_col = "team_exp", overlap_int = 1L,
-#     analysis_date = Sys.Date()
-#   )
-# }
+sql_adm <- if (FALSE) {
+  require(cmhmisc)
+  require(RODBC)
+  require(data.table)
+  sql <- list(
+    channel = odbcConnect("WSHSQL002"),
+    query = list()
+  )
+  # admissions
+  sql$query$adm <-
+    sprintf(
+      "select distinct
+      adm.case_no, adm.provider_eff as team_eff, adm.provider_exp as team_exp,
+      adm.provider as team, adm.assigned_staff as staff, adm.staff_eff,
+      adm.staff_exp, adm.adm_effdt, adm.adm_expdt
+      from encompass.dbo.tblE2_Adm_Consumers as adm
+      where adm.county = 'Washtenaw' and adm.provider in
+      ('WSH - ACT', 'WSH - ATO' , 'WSH - Children''s Services',
+      'WSH - Children''s Services - Home Based', 'WSH - DD Adult',
+      'WSH - Access/Engagement', 'Washtenaw County Community Mental Health',
+      'Washtenaw County Community Mental Health-External',
+      'WSH - MI - Adult')
+      and adm.providertype = 'Direct Provider'
+      and adm.provider_eff <= '%2$s' and
+      (adm.provider_exp >= '%1$s' or adm.provider_exp is null)",
+      "10/1/2010", "9/30/2017")
+  sql$adm <- sqlQuery(query = sql$query$adm,
+    channel = sql$channel, stringsAsFactors = FALSE)
+  sql$adm <- data.table(sql$adm)
+  adm <- copy(sql$adm)
+  adm[, Cc(staff_eff, staff_exp, staff) := NULL]
+  adm[, team_eff := as.Date(team_eff)]
+  adm[, team_exp := as.Date(team_exp)]
+  adm <- unique(adm)
+  cmhmisc::overlap_combine(
+    data = adm, group_cols = Cc(team, adm_effdt, adm_expdt),
+    start_col = "team_eff", end_col = "team_exp", overlap_int = 1L,
+    analysis_date = Sys.Date()
+  )[]
+}
 
 
 # R CMD checker appeasement ---
@@ -95,8 +101,7 @@ index <- i.index <- i.start_date <- start_date <- i.end_col <- end_date <-
 # analysis_date <- Sys.Date()
 
 
-# please use WIP2, which needs to be tested, at some point --------------------
-# last corrected 9/15/2016
+# last corrected 9/26/2017, 9/15/2016
 #' @export
 #' @rdname overlap_functions
 overlap_combine <-
@@ -192,103 +197,112 @@ overlap_combine <-
     return(d)
     }
 
-# WIP <- if (FALSE) {
-# case <- uN <- fl_pk <- gs_i <- pk <- fdate <- ldate <- NULL
-# overlap_combine2 <-
-#   function(data,
-#            case_col,
-#            group_cols,
-#            start_col,
-#            end_col,
-#            overlap_int = 1L,
-#            analysis_date = Sys.Date()) {
-#     focus_flds  <- c(start_col, end_col, case_col, group_cols)
-#     remand_flds <- setdiff(names(data), focus_flds)
-#     d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
-#     GS_v <- group_cols
-#     SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
-#     CS_v <- Cc(case)
-#     setnames(d, c(SD_v, CS_v, GS_v, remand_flds))
-#     set(d,
-#         j = SD_v,
-#         value = lapply(d[, SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
-#     if (!inherits(analysis_date, what = "Date"))
-#       analysis_date <- as.Date(analysis_date)
-#     d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
-#     # d[uN > 3]
-#     # setorderv(d, c(CS_v, GS_v, SD_v))
-#     setkeyv(d, c(SD_v))
-#     # d[, fl_pk := 1]
-#     # d[case==1126484]
-#     # Rcpp::sourceCpp("./src/overlap.cpp")
-#     # d[case==244779]
-#     # casenum <- 10499
-#     # casenum <- 244779
-#     # casenum <- 1126484
-#     d[, fl_pk := NA_integer_]
-#     folp <-
-#       function(SD1,
-#                SD2,
-#                type = "any",
-#                which = TRUE,
-#                mult = "all") {
-#         flopz <<-
-#           foverlaps(SD1,
-#                     SD2,
-#                     type = type,
-#                     which = which,
-#                     mult = mult)
-#         z <- copy(flopz)
-#         zset <- d.t(xid = sort(unique((z$xid)), key = "xid")
-#         z[xid > yid, `:=`(yid = xid, xid = yid)]
-#         z <- z[!duplicated(z)][order(xid, yid)] # & xid != yid
-#         if (z[,!any(xid != yid)] & nrow(z) == nrow(zset)) {
-#           return(z[, .(as.integer(yid))])
-#         } else if (z[, any(xid != yid)]) {
-#           rct <- copy(z[xid != yid])
-#           for (i in rev(seq_row(rct))) {
-#             # i=4 i=3 i=2 i=1
-#             rcs <- paste0(rct[i, yid], "=", rct[i, xid])
-#             z[, Cc(xid, yid) := lapply(.SD, recode, rcs)]
-#           }
-#           setkey(z, xid)
-#           return(z[zset, uni(.SD), roll = TRUE][, .(as.integer(yid))])
-#         }
-#         stop("The flop function has no idea how to handle a condition.")
-#       }
-#     #       d[uN > 1 & case == casenum]
-#     #        #& cmh_team == "Child"
-#     #       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
-#
-#     d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
-#     d[is.na(fl_pk), fl_pk := 1L]
-#
-#     setorderv(d, c(CS_v, "fl_pk", GS_v))
-#     d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
-#     spntf_mnchr_v <- d[, unlist(.(
-#       case = max(nchar(case)),
-#       ugrp = max(nchar(as.character(gs_i))),
-#       ufol = max(nchar(fl_pk))
-#     ))]
-#     fmt <- paste0("%",
-#                   spntf_mnchr_v['case'],
-#                   ".0f-%",
-#                   spntf_mnchr_v['ugrp'],
-#                   ".0f-%",
-#                   spntf_mnchr_v['ufol'],
-#                   ".0f")
-#     d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
-#     d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
-#     d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
-#     dn_v <- names(d)
-#     for (j in grepv('date', dn_v))
-#       set(d, j = j, value = as.Date(d[[j]], origin = "1970-01-01"))
-#     output_vec <-
-#       c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
-#     d <- d[, unique(.SD), .SDc = output_vec]
-#     return(d)
-#   }
-# }
+WIP <- if (FALSE) {
+case <- uN <- fl_pk <- gs_i <- pk <- fdate <- ldate <- NULL
+overlap_combine2 <-
+  function(data,
+           case_col,
+           group_cols,
+           start_col,
+           end_col,
+           overlap_int = 1L,
+           analysis_date = Sys.Date()) {
+    # data = adm
+    # case_col = "case_no"
+    # group_cols = c("team", "adm_effdt", "adm_expdt")
+    # start_col = "team_eff"
+    # end_col = "team_exp"
+    # overlap_int = 1L
+    # analysis_date = Sys.Date()
+
+
+    focus_flds  <- c(start_col, end_col, case_col, group_cols)
+    remand_flds <- setdiff(names(data), focus_flds)
+    d <- copy(data)[, .SD, .SDc = c(focus_flds, remand_flds)]
+    GS_v <- group_cols
+    SD_v <- c(srt_date_col = "strcol", end_date_col = "endcol")
+    CS_v <- Cc(case)
+    setnames(d, c(SD_v, CS_v, GS_v, remand_flds))
+    set(d,
+        j = SD_v,
+        value = lapply(d[, SD_v, with = FALSE], as.Date, format = '%m/%d/%Y'))
+    if (!inherits(analysis_date, what = "Date"))
+      analysis_date <- as.Date(analysis_date)
+    d[, uN := nrow(.SD), by = c(CS_v, GS_v)]
+    # d[uN > 3]
+    # setorderv(d, c(CS_v, GS_v, SD_v))
+    setkeyv(d, c(SD_v))
+    # d[, fl_pk := 1]
+    # d[case==1126484]
+    # Rcpp::sourceCpp("./src/overlap.cpp")
+    # d[case==244779]
+    # casenum <- 10499
+    # casenum <- 244779
+    # casenum <- 1126484
+    d[, fl_pk := NA_integer_]
+    folp <-
+      function(SD1,
+               SD2,
+               type = "any",
+               which = TRUE,
+               mult = "all") {
+        flopz <<-
+          foverlaps(SD1,
+                    SD2,
+                    type = type,
+                    which = which,
+                    mult = mult)
+        z <- copy(flopz)
+        zset <- d.t(xid = sort(unique((z$xid)), key = "xid"))
+        z[xid > yid, `:=`(yid = xid, xid = yid)]
+        z <- z[!duplicated(z)][order(xid, yid)] # & xid != yid
+        if (z[,!any(xid != yid)] & nrow(z) == nrow(zset)) {
+          return(z[, .(as.integer(yid))])
+        } else if (z[, any(xid != yid)]) {
+          rct <- copy(z[xid != yid])
+          for (i in rev(seq_row(rct))) {
+            # i=4 i=3 i=2 i=1
+            rcs <- paste0(rct[i, yid], "=", rct[i, xid])
+            z[, Cc(xid, yid) := lapply(.SD, recode, rcs)]
+          }
+          setkey(z, xid)
+          return(z[zset, uni(.SD), roll = TRUE][, .(as.integer(yid))])
+        }
+        stop("The flop function has no idea how to handle a condition.")
+      }
+    #       d[uN > 1 & case == casenum]
+    #        #& cmh_team == "Child"
+    #       d[uN > 1 & case == casenum , folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
+
+    d[uN > 1, fl_pk := folp(.SD, .SD), .SDc = c(SD_v), by = c(CS_v, GS_v)]
+    d[is.na(fl_pk), fl_pk := 1L]
+
+    setorderv(d, c(CS_v, "fl_pk", GS_v))
+    d[, gs_i := seq(nrow(.SD)), by = c(CS_v, "fl_pk"), .SDc = GS_v]
+    spntf_mnchr_v <- d[, unlist(.(
+      case = max(nchar(case)),
+      ugrp = max(nchar(as.character(gs_i))),
+      ufol = max(nchar(fl_pk))
+    ))]
+    fmt <- paste0("%",
+                  spntf_mnchr_v['case'],
+                  ".0f-%",
+                  spntf_mnchr_v['ugrp'],
+                  ".0f-%",
+                  spntf_mnchr_v['ufol'],
+                  ".0f")
+    d[, pk := gsub(" ", "0", sprintf(fmt, case, gs_i, fl_pk))]
+    d[, fdate := min(unlist(.SD)), by = pk, .SDc = SD_v['srt_date_col']]
+    d[, ldate := max(unlist(.SD)), by = pk, .SDc = SD_v['end_date_col']]
+    dn_v <- names(d)
+    for (j in grepv('date', dn_v))
+      set(d, j = j, value = as.Date(d[[j]], origin = "1970-01-01"))
+    output_vec <-
+      c(CS_v, GS_v, grepv('date', dn_v), 'pk', remand_flds)
+    d <- d[, unique(.SD), .SDc = output_vec]
+    return(d)
+  }
+}
 
 # priority column with overlapping date records -------------------------------
 #' @export

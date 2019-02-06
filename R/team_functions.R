@@ -26,6 +26,14 @@
 #' @examples
 #' cmh_recode("WSH - ACT")
 #' cmh_recode(c("WSH - ACT", "DD Adult"))
+#' require(cmhmisc)
+#' require(magrittr)
+#' test_vector <- c("ACT", "WSH - Children's Services - Home Based Ellsworth",
+#'  "WSH - Children's Services Ellsworth", "WSH - DD Adult Annex",
+#'  "WSH - DD Adult Ellsworth", "WSH - MI - Adult Annex", "WSH - MI - Adult Towner",
+#'  "Washtenaw County Community Mental Health")
+#'  cmh_recode(test_vector)
+
 #' @importFrom TBmisc as.chr
 #' @importFrom data.table data.table :=
 #'
@@ -33,61 +41,63 @@
 NULL
 
 #' @rdname team_functions
-cmh_team_key <- list(
-  ACT = c("ACT", "WSH - ACT"),
-  DD = c("DD", "WSH - DD Adult", "DD Adult"),
-  MI = c("WSH - MI - Adult", "WSH - ATO", "MI", "MI Adult"),
-  Child = c("Child", "WSH - Children's Services", "Children's Services"),
-  "Child HB" = c("WSH - Children's Services - Home Based", "Child HB",
-                 "Home Based", "Child Home Based"),
-  PORT = c("WSH - PATH/PORT"),
-  Access = c("Community Support and Treatment Services - CSTS",
-             "CSTS", "WSH - Access/Engagement", "Access", "Access/Engagement",
-             "Washtenaw County Community Mental Health"),
-  OBRA = c("WSH - OBRA", "OBRA"),
-  UM = c("WSH - Utilization Management", "UM"),
-  `non-CMH` = c("non-CMH", "Non-CMH", "WSH - MH Court", "WSH - ICSS team",
-             "WSH - Sobriety Court", "Crisis Residential Services")
-)
-
-#' @rdname team_functions
-cmh_program_key <- list(
-  DD = c("DD", "WSH - DD Adult", "DD Adult"),
-  MI = c("ACT", "WSH - ACT", "WSH - MI - Adult", "WSH - ATO", "MI", "MI Adult"),
-  `Y&F` = c("Child", "WSH - Children's Services", "Children's Services",
-            "WSH - Children's Services - Home Based", "Child HB", "Home Based"),
-  PORT = c("WSH - PATH/PORT"),
-  Access = c("Community Support and Treatment Services - CSTS",
-             "CSTS", "WSH - Access/Engagement", "Access", "Access/Engagement",
-             "Washtenaw County Community Mental Health"),
-  OBRA = c("WSH - OBRA", "OBRA"),
-  UM = c("WSH - Utilization Management", "UM"),
-  `non-CMH` = c("non-CMH", "Non-CMH", "WSH - MH Court",
-             "WSH - Sobriety Court", "Crisis Residential Services")
+team_names <- list(
+  DD = c("DD"),
+  ACT = c("ACT"),
+  MI = c("MI", "ATO"),
+  "Child HB" = c("Home Based", "^Child HB$"),
+  Child = c("^Child$", "Children's Services"),
+  Access = c("CSTS", "Access", "Engagement",
+    "Washtenaw County Community Mental Health"),
+  UM = c("UM", "Utilization Management"),
+  "non-CMH" = c("non-CMH", "Court", "ICSS", "Crisis Residential"),
+  PORT = c("PATH", "PORT"),
+  OBRA = c("OBRA")
 )
 
 #' @rdname team_functions
 #' @export
-cmh_recode <- function(x, missing_key = "non-CMH") {
-  if (class(x) == "factor") x <- as.chr(x)
-  if (any(is.na(x))) x[is.na(x)] <- missing_key
-  recode_key <- cmh_team_key
-  unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
-  if (length(unknown) > 0) {
-    recode_key$unknown <- unknown
+cmh_recode <- function(x) {
+  for (i in seq_along(team_names)) {
+  x[grepl(x = x,
+    pattern = paste0(team_names[[i]], collapse = "|") )] <- names(team_names[i])
   }
-  recode_string(x = x, recode_key = recode_key)
+  return(x)
 }
+# cmh_recode <- function(x, missing_key = "non-CMH") {
+#   if (class(x) == "factor") x <- as.chr(x)
+#   if (any(is.na(x))) x[is.na(x)] <- missing_key
+#   recode_key <- cmh_team_key
+#   unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
+#   if (length(unknown) > 0) {
+#     recode_key$unknown <- unknown
+#   }
+#   recode_string(x = x, recode_key = recode_key)
+# }
+
+#' @rdname team_functions
+cmh_program_key <- list(
+  DD = c("DD"),
+  MI = c("ACT", "MI"),
+  `Y&F` = c("Child", "Child HB"),
+  PORT = c("PATH"),
+  Access = c("Access"),
+  OBRA = c("OBRA"),
+  UM = c("UM"),
+  `non-CMH` = c("non-CMH")
+)
 
 #' @rdname team_functions
 #' @export
 recode_team_prog <- function(x, missing_key = "non-CMH") {
+  x <- cmh_recode(x)
   if (class(x) == "factor") x <- as.chr(x)
   if (any(is.na(x))) x[is.na(x)] <- missing_key
-  recode_key <- cmh_program_key
-  unknown <- setdiff(x, unlist(recode_key, use.names = FALSE))
-  recode_key$unknown <- unknown
-  recode_string(x, recode_key = recode_key)
+  unknown <- setdiff(x, unlist(cmh_program_key, use.names = FALSE))
+  if (length(unknown) > 0) {
+    cmh_program_key$unknown <- unknown
+  }
+  recode_string(x, recode_key = cmh_program_key)
 }
 
 #' @rdname team_functions

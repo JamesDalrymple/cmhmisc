@@ -2,6 +2,7 @@
 
 export("%P%")
 export("%nin%")
+export(add_quote)
 export(cap_word)
 export(closure_cut)
 export(cmh_colors)
